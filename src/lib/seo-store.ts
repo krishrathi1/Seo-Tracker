@@ -10,6 +10,9 @@ export type ModuleKey =
   | 'optimizer' 
   | 'alerts' 
   | 'reports' 
+  | 'schema'
+  | 'vitals'
+  | 'action-plan'
   | 'settings'
 
 interface SeoStore {

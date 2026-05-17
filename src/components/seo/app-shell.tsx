@@ -20,6 +20,12 @@ import {
   User,
   Keyboard,
   Plus,
+  Code2,
+  Zap,
+  Rocket,
+  Github,
+  Heart,
+  ExternalLink,
 } from "lucide-react"
 
 import { useSeoStore, type ModuleKey } from "@/lib/seo-store"
@@ -32,6 +38,9 @@ import { AlertsModule } from "@/components/seo/alerts-module"
 import { KeywordResearchModule } from "@/components/seo/keyword-research-module"
 import { ReportsModule } from "@/components/seo/reports-module"
 import { SettingsModule } from "@/components/seo/settings-module"
+import { SchemaAnalyzerModule } from "@/components/seo/schema-analyzer-module"
+import { CoreWebVitalsModule } from "@/components/seo/core-web-vitals-module"
+import { ActionPlanModule } from "@/components/seo/action-plan-module"
 import { AiChatAssistant } from "@/components/seo/ai-chat-assistant"
 import { cn } from "@/lib/utils"
 import { DashboardModule } from "@/components/seo/dashboard-module"
@@ -96,8 +105,11 @@ const navItems: NavItem[] = [
   { key: "audit", label: "Site Audit", icon: ShieldCheck, group: "main" },
   { key: "backlinks", label: "Backlinks", icon: Link, group: "main" },
   { key: "competitors", label: "Competitors", icon: Users, group: "main" },
+  { key: "schema", label: "Schema Analyzer", icon: Code2, group: "tools" },
+  { key: "vitals", label: "Core Web Vitals", icon: Zap, group: "tools" },
   { key: "research", label: "Keyword Research", icon: Search, group: "tools" },
   { key: "optimizer", label: "Content Optimizer", icon: FileText, group: "tools" },
+  { key: "action-plan", label: "AI Action Plan", icon: Rocket, group: "tools" },
   { key: "alerts", label: "Alerts", icon: Bell, group: "tools" },
   { key: "reports", label: "Reports", icon: BarChart3, group: "tools" },
   { key: "settings", label: "Settings", icon: Settings, group: "system" },
@@ -144,6 +156,18 @@ const modulePlaceholders: Record<ModuleKey, { title: string; description: string
   reports: {
     title: "Reports",
     description: "Generate and schedule comprehensive SEO reports for stakeholders.",
+  },
+  schema: {
+    title: "Schema Analyzer",
+    description: "Analyze structured data markup, validate JSON-LD, and improve rich results.",
+  },
+  vitals: {
+    title: "Core Web Vitals",
+    description: "Monitor page performance metrics, LCP, FID, CLS, and loading behavior.",
+  },
+  "action-plan": {
+    title: "AI Action Plan",
+    description: "Get a personalized step-by-step SEO improvement plan powered by AI.",
   },
   settings: {
     title: "Settings",
@@ -195,6 +219,21 @@ function ModuleContent({ moduleKey }: { moduleKey: ModuleKey }) {
   // Render reports module
   if (moduleKey === 'reports') {
     return <ReportsModule />
+  }
+
+  // Render schema analyzer module
+  if (moduleKey === 'schema') {
+    return <SchemaAnalyzerModule />
+  }
+
+  // Render core web vitals module
+  if (moduleKey === 'vitals') {
+    return <CoreWebVitalsModule />
+  }
+
+  // Render AI action plan module
+  if (moduleKey === 'action-plan') {
+    return <ActionPlanModule />
   }
 
   // Render settings module
@@ -556,12 +595,27 @@ export function AppShell() {
           {/* Open Source Badge */}
           <div className="px-2 group-data-[collapsible=icon]:hidden">
             <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
-              <Activity className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <Heart className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Free & Open Source</p>
-                <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/60">v1.0.0 · MIT License</p>
+                <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/60">v2.0.0 · MIT License</p>
               </div>
             </div>
+          </div>
+          <div className="px-2 group-data-[collapsible=icon]:hidden">
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-lg bg-muted/50 border border-border/50 px-3 py-2 hover:bg-muted transition-colors"
+            >
+              <Github className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium text-muted-foreground">Star on GitHub</p>
+                <p className="text-[10px] text-muted-foreground/60">⭐ 2.4k stars</p>
+              </div>
+              <ExternalLink className="h-3 w-3 text-muted-foreground/40 ml-auto shrink-0" />
+            </a>
           </div>
           <div className="flex items-center gap-2 px-2 group-data-[collapsible=icon]:justify-center">
             <Avatar className="h-7 w-7">

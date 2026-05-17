@@ -32,6 +32,14 @@ import {
   BarChart3,
   Search,
   Palette,
+  Star,
+  Bug,
+  Lightbulb,
+  HeartHandshake,
+  Coffee,
+  MessageSquare,
+  GitBranch,
+  Award,
 } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -234,22 +242,19 @@ function AccountSettings() {
 
         <Separator />
 
-        {/* Plan Info */}
+        {/* Open Source Community */}
         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-emerald-500" />
-                <span className="text-sm font-semibold">Pro Plan</span>
+                <Award className="h-4 w-4 text-emerald-500" />
+                <span className="text-sm font-semibold">Community Edition</span>
                 <Badge className="bg-emerald-500/15 text-emerald-600 border-0 text-[10px] px-1.5 py-0">
-                  Active
+                  Free Forever
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">$129/month &middot; Billed monthly &middot; Next billing: Apr 1, 2026</p>
+              <p className="text-xs text-muted-foreground mt-1">MIT License &middot; No limits, no paywalls, no tracking</p>
             </div>
-            <Button size="sm" variant="outline" className="h-8 text-xs">
-              Manage Plan
-            </Button>
           </div>
         </div>
       </CardContent>
@@ -729,9 +734,6 @@ function ApiAccessSettings() {
 
   const apiKey = 'rp_live_sk_a8f3c2d1e9b7456a0148cf92d3e7b6a1'
   const maskedKey = 'rp_live_sk_' + '•'.repeat(28)
-  const usagePercent = 67
-  const requestsUsed = 3348
-  const requestsLimit = 5000
 
   const handleCopy = () => {
     navigator.clipboard.writeText(apiKey).catch(() => {})
@@ -746,9 +748,16 @@ function ApiAccessSettings() {
           <Key className="h-4 w-4 text-emerald-500" />
           API Access
         </CardTitle>
-        <CardDescription>Manage your API key and monitor usage</CardDescription>
+        <CardDescription>Manage your API key — Community Edition</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
+        {/* Plan Badge */}
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
+          <Award className="h-3.5 w-3.5 text-emerald-500" />
+          <span className="text-xs font-medium text-emerald-600">Community Edition</span>
+          <span className="text-xs text-muted-foreground">— Unlimited API access</span>
+        </div>
+
         {/* API Key */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">API Key</Label>
@@ -778,14 +787,13 @@ function ApiAccessSettings() {
         {/* Usage Stats */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">API Usage This Month</span>
-            <span className="font-medium">
-              {requestsUsed.toLocaleString()} / {requestsLimit.toLocaleString()} requests
+            <span className="text-muted-foreground">API Usage</span>
+            <span className="font-medium text-emerald-600">
+              Unlimited
             </span>
           </div>
-          <Progress value={usagePercent} className="h-2" />
           <p className="text-[11px] text-muted-foreground">
-            {usagePercent}% of monthly limit used &middot; Resets on Apr 1, 2026
+            No rate limits &middot; Use as much as you need
           </p>
         </div>
 
@@ -808,11 +816,22 @@ function ApiAccessSettings() {
   )
 }
 
-// ─── Team Members ─────────────────────────────────────────────────────
+// ─── Community & Contributors ─────────────────────────────────────────
 function TeamMembersSettings() {
-  const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false)
-  const [inviteEmail, setInviteEmail] = React.useState('')
-  const [inviteRole, setInviteRole] = React.useState('viewer')
+  const CONTRIBUTORS = [
+    { initials: 'AK', name: 'Alex K.' },
+    { initials: 'ML', name: 'Maria L.' },
+    { initials: 'JW', name: 'James W.' },
+    { initials: 'SP', name: 'Sofia P.' },
+    { initials: 'RC', name: 'Ryan C.' },
+    { initials: 'YZ', name: 'Yuki Z.' },
+    { initials: 'DH', name: 'David H.' },
+    { initials: 'LB', name: 'Luna B.' },
+    { initials: 'TN', name: 'Tomas N.' },
+    { initials: 'EF', name: 'Elena F.' },
+    { initials: 'MR', name: 'Max R.' },
+    { initials: 'PJ', name: 'Priya J.' },
+  ]
 
   return (
     <Card>
@@ -821,134 +840,106 @@ function TeamMembersSettings() {
           <div>
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="h-4 w-4 text-emerald-500" />
-              Team Members
+              Community & Contributors
             </CardTitle>
-            <CardDescription>Manage team access and permissions</CardDescription>
+            <CardDescription>Join the open source community behind RankPulse</CardDescription>
           </div>
-          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Invite Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Invite Team Member</DialogTitle>
-                <DialogDescription>Send an invitation to join your RankPulse team</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-2">
-                <div className="space-y-1.5">
-                  <Label className="text-sm">Email Address</Label>
-                  <Input
-                    type="email"
-                    placeholder="colleague@company.com"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm">Role</Label>
-                  <Select value={inviteRole} onValueChange={setInviteRole}>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin — Full access to all features</SelectItem>
-                      <SelectItem value="editor">Editor — Can edit projects and reports</SelectItem>
-                      <SelectItem value="viewer">Viewer — Read-only access</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" size="sm" onClick={() => setInviteDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setInviteDialogOpen(false)}>
-                  Send Invitation
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
+        {/* Join our Community */}
+        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-emerald-500" />
+                <span className="text-sm font-semibold">Join our Community</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                1.2K+ community members &middot; 200+ contributors
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5">
+                <MessageSquare className="h-3 w-3" />
+                Discord
+              </Button>
+              <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5">
+                <GitBranch className="h-3 w-3" />
+                Discussions
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Top Contributors */}
         <div className="space-y-3">
-          {TEAM_MEMBERS.map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center justify-between rounded-lg border p-3 hover:border-emerald-500/20 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-emerald-500/10 text-emerald-600 text-xs font-semibold">
-                    {member.initials}
+          <h4 className="text-sm font-semibold">Top Contributors</h4>
+          <div className="flex flex-wrap gap-2">
+            {CONTRIBUTORS.map((contributor) => (
+              <div key={contributor.name} className="flex items-center gap-2 rounded-lg border p-2 hover:border-emerald-500/20 transition-colors">
+                <Avatar className="h-7 w-7">
+                  <AvatarFallback className="bg-emerald-500/10 text-emerald-600 text-[10px] font-semibold">
+                    {contributor.initials}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{member.name}</p>
-                  <p className="text-xs text-muted-foreground">{member.email}</p>
-                </div>
+                <span className="text-xs font-medium">{contributor.name}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <Badge className={cn('text-[10px] px-2 py-0.5 border-0 font-medium capitalize', ROLE_COLORS[member.role])}>
-                  {member.role}
-                </Badge>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-rose-500">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Become a Contributor CTA */}
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <p className="text-sm font-semibold">Become a Contributor</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Help shape the future of open source SEO</p>
+          </div>
+          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5">
+            <GitBranch className="h-3.5 w-3.5" />
+            Contribute
+          </Button>
         </div>
       </CardContent>
     </Card>
   )
 }
 
-// ─── Billing ──────────────────────────────────────────────────────────
+// ─── Open Source Community ──────────────────────────────────────────
 function BillingSettings() {
-  const planFeatures = [
-    'Up to 5 projects',
-    '1,000 keywords tracked',
-    'Weekly site audits',
-    'Backlink monitoring',
-    'Competitor tracking (5 competitors)',
-    'Email & Slack alerts',
-    'API access (5,000 requests/mo)',
-    'PDF & Web reports',
-  ]
-
-  const usageItems = [
-    { label: 'Keywords', used: 53, limit: 1000, color: 'bg-emerald-500' },
-    { label: 'Crawls', used: 24, limit: 50, color: 'bg-amber-500' },
-    { label: 'API Calls', used: 3348, limit: 5000, color: 'bg-cyan-500' },
+  const communityFeatures = [
+    'Unlimited projects',
+    'All 13 modules',
+    'AI-powered analysis',
+    'Export reports',
+    'No sign-up required',
   ]
 
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <CreditCard className="h-4 w-4 text-emerald-500" />
-          Billing
+          <Award className="h-4 w-4 text-emerald-500" />
+          Open Source Community
         </CardTitle>
-        <CardDescription>Manage your subscription and billing details</CardDescription>
+        <CardDescription>RankPulse is free and open source — forever</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Current Plan */}
+        {/* Community Edition */}
         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Palette className="h-5 w-5 text-emerald-500" />
-              <span className="text-base font-bold">Pro Plan</span>
-              <Badge className="bg-emerald-500/15 text-emerald-600 border-0 text-[10px] px-1.5 py-0">Active</Badge>
+              <span className="text-base font-bold">Community Edition</span>
+              <Badge className="bg-emerald-500/15 text-emerald-600 border-0 text-[10px] px-1.5 py-0">Free Forever</Badge>
             </div>
-            <span className="text-lg font-bold">$129<span className="text-sm font-normal text-muted-foreground">/mo</span></span>
+            <Badge className="bg-emerald-600 text-white border-0 text-[10px] px-2 py-0.5">MIT License</Badge>
           </div>
+          <p className="text-xs text-muted-foreground mb-3">No limits, no paywalls, no tracking</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            {planFeatures.map((feature, i) => (
+            {communityFeatures.map((feature, i) => (
               <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                 <span>{feature}</span>
@@ -957,40 +948,33 @@ function BillingSettings() {
           </div>
         </div>
 
-        {/* Usage This Month */}
+        {/* Support the Project */}
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold">Usage This Month</h4>
-          {usageItems.map((item) => {
-            const percent = Math.round((item.used / item.limit) * 100)
-            return (
-              <div key={item.label} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{item.label}</span>
-                  <span className="font-medium">
-                    {item.used.toLocaleString()} / {item.limit.toLocaleString()}
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={cn('h-full rounded-full transition-all duration-500', item.color)}
-                    style={{ width: `${Math.min(percent, 100)}%` }}
-                  />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <Separator />
-
-        {/* Upgrade */}
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <p className="text-sm font-semibold">Need more capacity?</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Upgrade to Enterprise for unlimited access and priority support</p>
+          <h4 className="text-sm font-semibold flex items-center gap-2">
+            <HeartHandshake className="h-4 w-4 text-emerald-500" />
+            Support the Project
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Button variant="outline" size="sm" className="h-9 text-xs justify-start gap-2 hover:border-amber-500/40 hover:bg-amber-500/5">
+              <Star className="h-3.5 w-3.5 text-amber-500" />
+              Star on GitHub
+            </Button>
+            <Button variant="outline" size="sm" className="h-9 text-xs justify-start gap-2 hover:border-red-500/40 hover:bg-red-500/5">
+              <Bug className="h-3.5 w-3.5 text-red-500" />
+              Report a Bug
+            </Button>
+            <Button variant="outline" size="sm" className="h-9 text-xs justify-start gap-2 hover:border-yellow-500/40 hover:bg-yellow-500/5">
+              <Lightbulb className="h-3.5 w-3.5 text-yellow-500" />
+              Request a Feature
+            </Button>
+            <Button variant="outline" size="sm" className="h-9 text-xs justify-start gap-2 hover:border-emerald-500/40 hover:bg-emerald-500/5">
+              <GitBranch className="h-3.5 w-3.5 text-emerald-500" />
+              Contribute
+            </Button>
           </div>
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-            Upgrade Plan
+          <Button size="sm" className="h-9 text-xs w-full bg-amber-600 hover:bg-amber-700 text-white gap-2">
+            <Coffee className="h-3.5 w-3.5" />
+            Sponsor / Buy Us a Coffee
           </Button>
         </div>
       </CardContent>
@@ -1036,11 +1020,11 @@ export function SettingsModule() {
             </TabsTrigger>
             <TabsTrigger value="team" className="text-xs">
               <Users className="h-3.5 w-3.5 mr-1.5" />
-              Team
+              Community
             </TabsTrigger>
             <TabsTrigger value="billing" className="text-xs">
-              <CreditCard className="h-3.5 w-3.5 mr-1.5" />
-              Billing
+              <Award className="h-3.5 w-3.5 mr-1.5" />
+              Open Source
             </TabsTrigger>
           </TabsList>
 

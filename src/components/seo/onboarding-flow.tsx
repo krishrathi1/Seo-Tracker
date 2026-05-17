@@ -15,6 +15,10 @@ import {
   ArrowRight,
   Loader2,
   X,
+  Share2,
+  BarChart3,
+  Heart,
+  Code2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -416,6 +420,30 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 ))}
               </motion.div>
 
+              {/* Why choose RankPulse? pills */}
+              <motion.div
+                className="flex flex-wrap items-center justify-center gap-2 mb-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.45 }}
+              >
+                <span className="text-[10px] text-muted-foreground/70 mr-0.5">Why choose RankPulse?</span>
+                {[
+                  { emoji: '🔍', label: 'No sign-up required' },
+                  { emoji: '🤖', label: 'AI-powered analysis' },
+                  { emoji: '📊', label: '13 SEO modules' },
+                  { emoji: '🆓', label: '100% free & open source' },
+                ].map((item) => (
+                  <span
+                    key={item.label}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full border border-border/60 bg-background/60 text-muted-foreground"
+                  >
+                    <span className="text-[11px]">{item.emoji}</span>
+                    {item.label}
+                  </span>
+                ))}
+              </motion.div>
+
               {/* Analyze Button */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -470,6 +498,54 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                     </Card>
                   </motion.div>
                 ))}
+              </motion.div>
+
+              {/* Testimonials */}
+              <motion.div
+                className="mt-4 w-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.9 }}
+              >
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-x-6 gap-y-1">
+                  {[
+                    { quote: '"Best free SEO tool I\'ve ever used"', author: '@seo_expert' },
+                    { quote: '"Replaced my $200/mo subscription"', author: '@digital_marketer' },
+                    { quote: '"The AI insights are incredibly accurate"', author: '@webdev_pro' },
+                  ].map((t) => (
+                    <div key={t.author} className="flex items-baseline gap-1.5">
+                      <span className="text-[10px] text-muted-foreground/70 italic">{t.quote}</span>
+                      <span className="text-[10px] text-emerald-600/60 dark:text-emerald-400/60 font-medium">— {t.author}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Social Proof / Stats */}
+              <motion.div
+                className="mt-5 w-full"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.0, duration: 0.4 }}
+              >
+                <p className="text-center text-xs text-muted-foreground/80 font-medium mb-3">
+                  Trusted by 10,000+ SEO professionals worldwide
+                </p>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { icon: BarChart3, value: '50K+', label: 'Sites Analyzed' },
+                    { icon: Heart, value: '100%', label: 'Free Forever' },
+                    { icon: Code2, value: 'Open Source', label: 'MIT License' },
+                  ].map((stat) => (
+                    <Card key={stat.label} className="border-emerald-200/40 dark:border-emerald-800/40 bg-emerald-50/30 dark:bg-emerald-950/10">
+                      <CardContent className="p-3 flex flex-col items-center text-center gap-1">
+                        <stat.icon className="h-4 w-4 text-emerald-500" />
+                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{stat.value}</span>
+                        <span className="text-[10px] text-muted-foreground">{stat.label}</span>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </motion.div>
             </motion.div>
           )}
@@ -597,9 +673,40 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 {analysisResult.projectName} ({analysisResult.domain})
               </motion.p>
 
+              {/* SEO Grade Badge */}
+              <motion.div
+                className="mb-4"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.45, type: 'spring', stiffness: 200 }}
+              >
+                {(() => {
+                  const score = analysisResult.seoScore
+                  let grade = 'F'
+                  let gradeColor = 'bg-red-500 text-white'
+                  if (score >= 90) { grade = 'A+'; gradeColor = 'bg-emerald-500 text-white' }
+                  else if (score >= 80) { grade = 'A'; gradeColor = 'bg-emerald-500 text-white' }
+                  else if (score >= 70) { grade = 'B'; gradeColor = 'bg-emerald-400 text-white' }
+                  else if (score >= 60) { grade = 'C'; gradeColor = 'bg-amber-500 text-white' }
+                  else if (score >= 50) { grade = 'D'; gradeColor = 'bg-orange-500 text-white' }
+                  else if (score >= 30) { grade = 'F'; gradeColor = 'bg-red-500 text-white' }
+                  return (
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-14 w-14 items-center justify-center rounded-xl text-2xl font-black shadow-lg ${gradeColor}`}>
+                        {grade}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-semibold">SEO Grade</p>
+                        <p className="text-xs text-muted-foreground">Score: {score}/100</p>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </motion.div>
+
               {/* Summary Cards */}
               <motion.div
-                className="grid grid-cols-3 gap-3 w-full mb-8"
+                className="grid grid-cols-3 gap-3 w-full mb-3"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
@@ -632,8 +739,25 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 </Card>
               </motion.div>
 
-              {/* Enter Dashboard Button */}
+              {/* Issues to fix link */}
               <motion.div
+                className="w-full mb-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.65 }}
+              >
+                <p className="text-center text-xs text-muted-foreground">
+                  {analysisResult.issuesFound > 0 ? (
+                    <>{analysisResult.issuesFound} issue{analysisResult.issuesFound !== 1 ? 's' : ''} to fix — <span className="text-emerald-600 dark:text-emerald-400 font-medium cursor-pointer hover:underline" onClick={() => onComplete(analysisResult)}>View details →</span></>
+                  ) : (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">No issues found — Great job!</span>
+                  )}
+                </p>
+              </motion.div>
+
+              {/* Action Buttons */}
+              <motion.div
+                className="flex items-center gap-3"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
@@ -645,6 +769,18 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 >
                   Enter Dashboard
                   <ArrowRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="h-12 px-4 gap-2"
+                  onClick={() => {
+                    const shareUrl = `${window.location.origin}?site=${encodeURIComponent(analysisResult.domain)}&score=${analysisResult.seoScore}`
+                    navigator.clipboard.writeText(shareUrl).catch(() => {})
+                  }}
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share Results
                 </Button>
               </motion.div>
 

@@ -17,6 +17,15 @@ import {
   Activity,
   Crown,
   Globe,
+  FileDown,
+  Zap,
+  ListChecks,
+  Code2,
+  ChevronRight,
+  AlertTriangle,
+  Wrench,
+  Smartphone,
+  Lock,
 } from 'lucide-react'
 import {
   PieChart,
@@ -38,6 +47,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Progress } from '@/components/ui/progress'
 import {
   Table,
   TableBody,
@@ -143,6 +153,34 @@ function getScoreStroke(score: number): string {
   if (score >= 70) return CHART_COLORS.emerald
   if (score >= 40) return CHART_COLORS.amber
   return CHART_COLORS.rose
+}
+
+// ─── SEO Grade System ──────────────────────────────────────────────────
+type GradeInfo = { letter: string; color: string; bgColor: string; textColor: string }
+
+function getGrade(score: number): GradeInfo {
+  if (score >= 90) return { letter: 'A+', color: 'bg-emerald-500', bgColor: 'bg-emerald-500/15', textColor: 'text-emerald-600 dark:text-emerald-400' }
+  if (score >= 80) return { letter: 'A', color: 'bg-emerald-500', bgColor: 'bg-emerald-500/15', textColor: 'text-emerald-600 dark:text-emerald-400' }
+  if (score >= 70) return { letter: 'B', color: 'bg-teal-500', bgColor: 'bg-teal-500/15', textColor: 'text-teal-600 dark:text-teal-400' }
+  if (score >= 60) return { letter: 'C', color: 'bg-amber-500', bgColor: 'bg-amber-500/15', textColor: 'text-amber-600 dark:text-amber-400' }
+  if (score >= 40) return { letter: 'D', color: 'bg-orange-500', bgColor: 'bg-orange-500/15', textColor: 'text-orange-600 dark:text-orange-400' }
+  return { letter: 'F', color: 'bg-rose-500', bgColor: 'bg-rose-500/15', textColor: 'text-rose-600 dark:text-rose-400' }
+}
+
+function GradeBadge({ score, size = 'default' }: { score: number; size?: 'default' | 'lg' }) {
+  const grade = getGrade(score)
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center justify-center rounded-md font-bold tabular-nums',
+        grade.bgColor,
+        grade.textColor,
+        size === 'lg' ? 'h-10 w-10 text-lg' : 'h-7 w-7 text-sm'
+      )}
+    >
+      {grade.letter}
+    </span>
+  )
 }
 
 // ─── Fetch hook ───────────────────────────────────────────────────────
@@ -280,7 +318,28 @@ function MetricCards({ data }: { data: DashboardData }) {
         ? `${data.audit.issueBreakdown.critical} critical issues`
         : 'No critical issues',
       subtitleColor: data.audit.issueBreakdown.critical > 0 ? 'text-rose-500' : 'text-emerald-500',
-      custom: <CircularProgress value={data.healthScore} />,
+      custom: (
+        <div className="flex items-center gap-3 mt-3">
+          <CircularProgress value={data.healthScore} />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <GradeBadge score={data.healthScore} />
+              <span className={cn('text-sm font-medium', getScoreColor(data.healthScore))}>
+                Grade {getGrade(data.healthScore).letter}
+              </span>
+            </div>
+            <p className={cn('text-xs', data.audit.issueBreakdown.critical > 0 ? 'text-rose-500' : 'text-emerald-500')}>
+              {data.audit.issueBreakdown.critical > 0
+                ? `${data.audit.issueBreakdown.critical} critical issues`
+                : 'No critical issues'}
+            </p>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Zap className="h-3 w-3 text-amber-500" />
+              <span>Potential: <span className="font-medium text-emerald-600 dark:text-emerald-400">{Math.min(100, data.healthScore + data.audit.issueBreakdown.critical * 5 + data.audit.issueBreakdown.high * 2)}</span></span>
+            </div>
+          </div>
+        </div>
+      ),
     },
     {
       title: 'Keywords Tracked',
@@ -352,12 +411,7 @@ function MetricCards({ data }: { data: DashboardData }) {
               </div>
 
               {card.custom ? (
-                <div className="flex items-center gap-4 mt-3">
-                  {card.custom}
-                  <div>
-                    <p className={cn('text-sm', card.subtitleColor)}>{card.subtitle}</p>
-                  </div>
-                </div>
+                card.custom
               ) : (
                 <>
                   <p className="text-3xl font-bold tracking-tight mt-3 tabular-nums">{card.value}</p>
@@ -649,6 +703,283 @@ function CompetitorComparison({ competitors }: { competitors: DashboardData['com
   )
 }
 
+// ─── Quick Actions ────────────────────────────────────────────────────
+function QuickActions({ data }: { data: DashboardData }) {
+  const setActiveModule = useSeoStore((s) => s.setActiveModule)
+  const resetForNewAnalysis = useSeoStore((s) => s.resetForNewAnalysis)
+
+  const handleExport = () => {
+    const params = new URLSearchParams({
+      projectId: data.project.id,
+      format: 'csv',
+      module: 'full',
+    })
+    window.open(`/api/seo/export?${params.toString()}`, '_blank')
+  }
+
+  const actions = [
+    {
+      label: 'Run New Analysis',
+      icon: Activity,
+      onClick: resetForNewAnalysis,
+      variant: 'default' as const,
+      className: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+    },
+    {
+      label: 'Export Report',
+      icon: FileDown,
+      onClick: handleExport,
+      variant: 'outline' as const,
+      className: 'border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400',
+    },
+    {
+      label: 'View Action Plan',
+      icon: ListChecks,
+      onClick: () => setActiveModule('action-plan'),
+      variant: 'outline' as const,
+      className: 'border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400',
+    },
+    {
+      label: 'Schema Analyzer',
+      icon: Code2,
+      onClick: () => setActiveModule('schema'),
+      variant: 'outline' as const,
+      className: 'border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-400',
+    },
+  ]
+
+  return (
+    <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
+      <Card>
+        <CardContent className="pt-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10">
+                <Zap className="h-4.5 w-4.5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Quick Actions</p>
+                <p className="text-xs text-muted-foreground">Common tasks and shortcuts</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {actions.map((action) => (
+                <Button
+                  key={action.label}
+                  variant={action.variant}
+                  size="sm"
+                  className={cn('h-8 text-xs gap-1.5', action.className)}
+                  onClick={action.onClick}
+                >
+                  <action.icon className="h-3.5 w-3.5" />
+                  {action.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
+
+// ─── Grade Breakdown ───────────────────────────────────────────────────
+function GradeBreakdown({ data }: { data: DashboardData }) {
+  // Derive sub-grades from the data
+  const technicalScore = data.audit.score
+  const contentScore = data.keywords.total > 0
+    ? Math.min(100, Math.round(
+        (data.keywords.distribution.top3 * 5 +
+         data.keywords.distribution.top10 * 3 +
+         data.keywords.distribution.top20 * 1.5 +
+         data.keywords.distribution.rank21to50 * 0.5) /
+        Math.max(1, data.keywords.total) * 10
+      ))
+    : 0
+  const authorityScore = Math.min(100, Math.round(
+    (data.backlinks.referringDomains * 2 +
+     data.backlinks.total * 0.5 +
+     data.backlinks.followRatio * 0.3)
+  ))
+  const experienceScore = Math.min(100, Math.round(
+    (data.healthScore * 0.4 +
+     (data.audit.issueBreakdown.critical === 0 ? 30 : 10) +
+     (data.backlinks.followRatio > 50 ? 20 : 10) +
+     (data.audit.score > 70 ? 10 : 5))
+  ))
+
+  const overallScore = Math.round((technicalScore + contentScore + authorityScore + experienceScore) / 4)
+
+  const grades = [
+    { label: 'Technical SEO', icon: Wrench, score: technicalScore, description: 'Site structure, speed & crawlability' },
+    { label: 'Content', icon: Target, score: contentScore, description: 'Keyword rankings & content quality' },
+    { label: 'Authority', icon: Link2, score: authorityScore, description: 'Backlinks & referring domains' },
+    { label: 'Experience', icon: Smartphone, score: experienceScore, description: 'Mobile, SSL & user experience' },
+  ]
+
+  return (
+    <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              <div>
+                <CardTitle className="text-base">SEO Grade Breakdown</CardTitle>
+                <CardDescription>Performance across key SEO categories</CardDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Overall</span>
+              <GradeBadge score={overallScore} size="lg" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {grades.map((grade) => {
+            const gradeInfo = getGrade(grade.score)
+            return (
+              <div key={grade.label} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <grade.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-sm font-medium">{grade.label}</span>
+                    <span className="text-[10px] text-muted-foreground">{grade.description}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs tabular-nums text-muted-foreground">{grade.score}/100</span>
+                    <GradeBadge score={grade.score} />
+                  </div>
+                </div>
+                <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/30">
+                  <div
+                    className={cn('h-full rounded-full transition-all duration-700', gradeInfo.color)}
+                    style={{ width: `${grade.score}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
+
+// ─── Priority Issues Widget ────────────────────────────────────────────
+function PriorityIssues({ data }: { data: DashboardData }) {
+  const setActiveModule = useSeoStore((s) => s.setActiveModule)
+
+  // Derive top 3 critical/high issues from audit data
+  // Since we don't have the actual issue list in DashboardData, we synthesize from the breakdown
+  const priorityIssues = []
+
+  if (data.audit.issueBreakdown.critical > 0) {
+    priorityIssues.push(
+      { severity: 'critical', title: `${data.audit.issueBreakdown.critical} Critical Issue${data.audit.issueBreakdown.critical > 1 ? 's' : ''} Found`, description: 'Critical issues severely impact your SEO performance' },
+    )
+  }
+  if (data.audit.issueBreakdown.high > 0) {
+    priorityIssues.push(
+      { severity: 'high', title: `${data.audit.issueBreakdown.high} High Priority Issue${data.audit.issueBreakdown.high > 1 ? 's' : ''}`, description: 'High severity issues need immediate attention' },
+    )
+  }
+  if (data.audit.issueBreakdown.medium > 0 && priorityIssues.length < 3) {
+    priorityIssues.push(
+      { severity: 'medium', title: `${data.audit.issueBreakdown.medium} Medium Priority Issue${data.audit.issueBreakdown.medium > 1 ? 's' : ''}`, description: 'Medium issues can affect rankings over time' },
+    )
+  }
+
+  // Limit to 3
+  const displayIssues = priorityIssues.slice(0, 3)
+
+  const severityConfig: Record<string, { color: string; bgColor: string; borderColor: string }> = {
+    critical: { color: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-50 dark:bg-rose-950/20', borderColor: 'border-rose-200 dark:border-rose-800' },
+    high: { color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-950/20', borderColor: 'border-orange-200 dark:border-orange-800' },
+    medium: { color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50 dark:bg-amber-950/20', borderColor: 'border-amber-200 dark:border-amber-800' },
+  }
+
+  return (
+    <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <div>
+                <CardTitle className="text-base">Priority Issues</CardTitle>
+                <CardDescription>Top issues that need your attention</CardDescription>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => setActiveModule('audit')}
+            >
+              View All
+              <ChevronRight className="h-3 w-3" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {displayIssues.length === 0 ? (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+              <ShieldCheck className="h-5 w-5 text-emerald-500" />
+              <div>
+                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">No critical issues detected</p>
+                <p className="text-xs text-emerald-600/70 dark:text-emerald-500">Your site is performing well across all checks</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {displayIssues.map((issue, i) => {
+                const config = severityConfig[issue.severity] ?? severityConfig.medium
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      'flex items-center justify-between p-3 rounded-lg border',
+                      config.bgColor,
+                      config.borderColor
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Badge
+                        className={cn(
+                          'text-[9px] px-1.5 py-0 border-0 font-semibold uppercase',
+                          issue.severity === 'critical' ? 'bg-rose-500/15 text-rose-600' :
+                          issue.severity === 'high' ? 'bg-orange-500/15 text-orange-600' :
+                          'bg-amber-500/15 text-amber-600'
+                        )}
+                      >
+                        {issue.severity}
+                      </Badge>
+                      <div>
+                        <p className={cn('text-sm font-medium', config.color)}>{issue.title}</p>
+                        <p className="text-[10px] text-muted-foreground">{issue.description}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn('h-7 text-xs gap-1 shrink-0', config.color)}
+                      onClick={() => setActiveModule('audit')}
+                    >
+                      Fix now
+                      <ChevronRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
+
 // ─── Social Preview & Quick Actions ──────────────────────────────────
 function SocialPreviewAndActions({ data }: { data: DashboardData }) {
   const domain = data.project.domain
@@ -776,13 +1107,22 @@ export function DashboardModule() {
     <div className="flex-1 overflow-y-auto">
       <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
 
+        {/* ── 0. Quick Actions ─────────────────────────────── */}
+        <QuickActions data={data} />
+
         {/* ── 1. Top Metric Cards ──────────────────────────── */}
         <MetricCards data={data} />
 
-        {/* ── 2. Social Preview & Quick Actions ─────────────── */}
+        {/* ── 2. Grade Breakdown & Priority Issues ─────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <GradeBreakdown data={data} />
+          <PriorityIssues data={data} />
+        </div>
+
+        {/* ── 3. Social Preview & Quick Actions ─────────────── */}
         <SocialPreviewAndActions data={data} />
 
-        {/* ── 3. Keyword Distribution & Rank Trend ─────────── */}
+        {/* ── 4. Keyword Distribution & Rank Trend ─────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="h-full">
@@ -809,7 +1149,7 @@ export function DashboardModule() {
           </motion.div>
         </div>
 
-        {/* ── 4. Biggest Movers ────────────────────────────── */}
+        {/* ── 5. Biggest Movers ────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="h-full">
@@ -842,7 +1182,7 @@ export function DashboardModule() {
           </motion.div>
         </div>
 
-        {/* ── 5. Site Health & Audit + Backlink Profile ────── */}
+        {/* ── 6. Site Health & Audit + Backlink Profile ────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="h-full">
@@ -878,7 +1218,7 @@ export function DashboardModule() {
           </motion.div>
         </div>
 
-        {/* ── 6. Competitor Comparison ─────────────────────── */}
+        {/* ── 7. Competitor Comparison ─────────────────────── */}
         <motion.div custom={10} variants={fadeUp} initial="hidden" animate="visible">
           <Card>
             <CardHeader className="pb-2">
