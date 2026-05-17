@@ -355,16 +355,76 @@ function AppHeader() {
         <div className="flex-1" />
 
         {/* Project Selector */}
-        <Select value={activeProjectId || undefined} onValueChange={(val) => useSeoStore.getState().setActiveProjectId(val)}>
-          <SelectTrigger className="w-[180px] hidden sm:flex h-8 text-xs">
-            <SelectValue placeholder="Select project" />
-          </SelectTrigger>
-          <SelectContent>
-            {projects.map((p) => (
-              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="hidden sm:flex h-8 gap-1.5 text-xs font-semibold border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+              <span className="truncate max-w-[120px]">
+                {projects.find(p => p.id === activeProjectId)?.name || "Select project"}
+              </span>
+              <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[260px]">
+            <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              Switch Site / Project
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {projects.length === 0 ? (
+              <div className="py-6 text-center text-xs text-muted-foreground">No projects found.</div>
+            ) : (
+              projects.map((p) => {
+                const isActive = p.id === activeProjectId
+                return (
+                  <div
+                    key={p.id}
+                    className={cn(
+                      "flex items-center justify-between gap-2 px-2 py-1.5 text-xs rounded-md cursor-pointer transition-colors group/item",
+                      isActive ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 font-semibold" : "hover:bg-zinc-50 dark:hover:bg-zinc-900/50 text-zinc-700 dark:text-zinc-300"
+                    )}
+                    onClick={() => useSeoStore.getState().setActiveProjectId(p.id)}
+                  >
+                    <span className="truncate flex-1 pr-2">{p.name || p.domain}</span>
+                    <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-500 text-muted-foreground/40 opacity-0 group-hover/item:opacity-100 transition-opacity duration-150"
+                        onClick={async () => {
+                          if (confirm(`Are you sure you want to delete the site "${p.name || p.domain}"? This will permanently delete all ranking history, backlink profiles, site audit details, and alerts.`)) {
+                            try {
+                              const res = await fetch(`/api/seo/projects?id=${p.id}`, { method: 'DELETE' })
+                              if (res.ok) {
+                                // Remove project from state
+                                setProjects(prev => prev.filter(proj => proj.id !== p.id))
+                                // If the active project is deleted, select another one or reset
+                                if (activeProjectId === p.id) {
+                                  const remaining = projects.filter(proj => proj.id !== p.id)
+                                  if (remaining.length > 0) {
+                                    useSeoStore.getState().setActiveProjectId(remaining[0].id)
+                                  } else {
+                                    useSeoStore.getState().resetForNewAnalysis()
+                                  }
+                                }
+                              } else {
+                                alert("Failed to delete project. Please try again.")
+                              }
+                            } catch (err) {
+                              console.error(err)
+                              alert("An error occurred while deleting the project.")
+                            }
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                      {isActive && <Check className="h-3.5 w-3.5 text-emerald-500" />}
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* New Analysis Button */}
         <Button
@@ -400,50 +460,6 @@ function AppHeader() {
         >
           <Search className="h-4 w-4" />
         </Button>
-
-        {/* Notification bell */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-8 w-8">
-              <Bell className="h-4 w-4" />
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-                3
-              </span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel className="flex items-center justify-between">
-              Notifications
-              <Badge variant="secondary" className="text-[10px]">3 new</Badge>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex flex-col items-start gap-1 p-3">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-primary" />
-                <span className="text-sm font-medium">Ranking Improvement</span>
-              </div>
-              <span className="text-xs text-muted-foreground pl-4">&quot;best seo tools&quot; moved from #8 to #3</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex flex-col items-start gap-1 p-3">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-destructive" />
-                <span className="text-sm font-medium">Lost Backlink</span>
-              </div>
-              <span className="text-xs text-muted-foreground pl-4">techcrunch.com removed follow link</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex flex-col items-start gap-1 p-3">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-amber-500" />
-                <span className="text-sm font-medium">Audit Complete</span>
-              </div>
-              <span className="text-xs text-muted-foreground pl-4">Site audit found 12 new issues</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-center justify-center text-primary text-xs font-medium">
-              View all notifications
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
 
         {/* Theme toggle */}
         <Button
