@@ -19,6 +19,7 @@ import {
   LogOut,
   User,
   Keyboard,
+  Plus,
 } from "lucide-react"
 
 import { useSeoStore, type ModuleKey } from "@/lib/seo-store"
@@ -282,6 +283,16 @@ function AppHeader() {
   const [commandOpen, setCommandOpen] = React.useState(false)
   const activeModule = useSeoStore((s) => s.activeModule)
   const setActiveModule = useSeoStore((s) => s.setActiveModule)
+  const activeProjectId = useSeoStore((s) => s.activeProjectId)
+  const resetForNewAnalysis = useSeoStore((s) => s.resetForNewAnalysis)
+  const [projects, setProjects] = React.useState<Array<{ id: string; name: string; domain: string }>>([])
+
+  React.useEffect(() => {
+    fetch('/api/seo/projects')
+      .then(res => res.ok ? res.json() : { projects: [] })
+      .then(data => setProjects(data.projects || []))
+      .catch(() => {})
+  }, [])
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -309,16 +320,27 @@ function AppHeader() {
         <div className="flex-1" />
 
         {/* Project Selector */}
-        <Select defaultValue="techventure">
+        <Select value={activeProjectId || undefined} onValueChange={(val) => useSeoStore.getState().setActiveProjectId(val)}>
           <SelectTrigger className="w-[180px] hidden sm:flex h-8 text-xs">
             <SelectValue placeholder="Select project" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="techventure">TechVenture Inc.</SelectItem>
-            <SelectItem value="growthlab">GrowthLab.io</SelectItem>
-            <SelectItem value="dataflow">DataFlow Systems</SelectItem>
+            {projects.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
+
+        {/* New Analysis Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="hidden sm:flex h-8 gap-1.5 text-xs border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+          onClick={resetForNewAnalysis}
+        >
+          <Plus className="h-3.5 w-3.5" />
+          New Analysis
+        </Button>
 
         {/* Command Palette Trigger */}
         <Button

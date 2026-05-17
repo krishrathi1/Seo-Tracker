@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Helper: random integer between min and max (inclusive)
 function randInt(min: number, max: number) {
@@ -209,9 +209,52 @@ const ALERTS_DATA = [
   { type: 'audit', severity: 'medium', title: 'Issue status update', message: '5 previously open audit issues have been marked as resolved in the latest scan.' },
 ]
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    // Clear existing data (allow re-seeding)
+    const { searchParams } = new URL(request.url)
+    const force = searchParams.get('force') === 'true'
+    const clear = searchParams.get('clear') === 'true'
+
+    // Handle clear mode - just wipe all data and return
+    if (clear) {
+      await db.keywordRank.deleteMany()
+      await db.auditIssue.deleteMany()
+      await db.siteAudit.deleteMany()
+      await db.backlink.deleteMany()
+      await db.competitor.deleteMany()
+      await db.alert.deleteMany()
+      await db.keyword.deleteMany()
+      await db.project.deleteMany()
+
+      return NextResponse.json({
+        success: true,
+        message: 'All data cleared successfully',
+        counts: { projects: 0, keywords: 0, rankHistory: 0, audits: 0, auditIssues: 0, backlinks: 0, competitors: 0, alerts: 0 },
+      })
+    }
+
+    // Check if data already exists
+    const existingProjectCount = await db.project.count()
+    if (existingProjectCount > 0 && !force) {
+      const counts = {
+        projects: await db.project.count(),
+        keywords: await db.keyword.count(),
+        rankHistory: await db.keywordRank.count(),
+        audits: await db.siteAudit.count(),
+        auditIssues: await db.auditIssue.count(),
+        backlinks: await db.backlink.count(),
+        competitors: await db.competitor.count(),
+        alerts: await db.alert.count(),
+      }
+      return NextResponse.json({
+        success: true,
+        message: 'Data already exists. Use ?force=true to re-seed or ?clear=true to clear all data.',
+        alreadySeeded: true,
+        counts,
+      })
+    }
+
+    // Clear existing data (force re-seed)
     await db.keywordRank.deleteMany()
     await db.auditIssue.deleteMany()
     await db.siteAudit.deleteMany()
@@ -452,6 +495,38 @@ export async function POST() {
     console.error('Seed error:', error)
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
+  }
+}
+
+// GET /api/seo/seed - Check seed status
+export async function GET() {
+  try {
+    const counts = {
+      projects: await db.project.count(),
+      keywords: await db.keyword.count(),
+      rankHistory: await db.keywordRank.count(),
+      audits: await db.siteAudit.count(),
+      auditIssues: await db.auditIssue.count(),
+      backlinks: await db.backlink.count(),
+      competitors: await db.competitor.count(),
+      alerts: await db.alert.count(),
+    }
+
+    const isSeeded = counts.projects > 0
+
+    return NextResponse.json({
+      isSeeded,
+      counts,
+      message: isSeeded
+        ? 'Database has data. Use POST to seed (add ?force=true to re-seed or ?clear=true to clear).'
+        : 'Database is empty. Use POST to seed.',
+    })
+  } catch (error) {
+    console.error('Seed status error:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
