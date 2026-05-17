@@ -34,6 +34,8 @@ import {
   Cell,
   AreaChart,
   Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -496,50 +498,60 @@ function MonthlyRankTrend({ trend }: { trend: DashboardData['monthlyTrend'] }) {
       rank: t.averageRank,
     }))
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 p-3 shadow-xl backdrop-blur-md">
+          <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+            <span className="text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+              #{payload[0].value.toFixed(1)}
+            </span>
+            <span className="text-xs font-medium text-muted-foreground">Avg Rank</span>
+          </div>
+        </div>
+      )
+    }
+    return null
+  }
+
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+      <LineChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
         <defs>
-          <linearGradient id="rankGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={CHART_COLORS.emerald} stopOpacity={0.3} />
-            <stop offset="100%" stopColor={CHART_COLORS.emerald} stopOpacity={0} />
-          </linearGradient>
+          <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
         <XAxis
           dataKey="month"
-          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+          tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 500 }}
           axisLine={false}
           tickLine={false}
+          dy={10}
         />
         <YAxis
           reversed
           domain={['dataMin - 2', 'dataMax + 2']}
-          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+          tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 500 }}
           axisLine={false}
           tickLine={false}
-          label={{ value: 'Rank (lower = better)', angle: -90, position: 'insideLeft', style: { fontSize: 10, fill: 'hsl(var(--muted-foreground))' } }}
+          dx={-10}
         />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: 'hsl(var(--card))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px',
-            fontSize: '12px',
-          }}
-          formatter={(value: number) => [`#${value.toFixed(1)}`, 'Avg Rank']}
-          labelFormatter={(label: string) => `${label}`}
-        />
-        <Area
+        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.2 }} />
+        <Line
           type="monotone"
           dataKey="rank"
           stroke={CHART_COLORS.emerald}
-          strokeWidth={2.5}
-          fill="url(#rankGradient)"
-          dot={false}
-          activeDot={{ r: 4, stroke: CHART_COLORS.emerald, strokeWidth: 2, fill: 'hsl(var(--card))' }}
+          strokeWidth={3}
+          dot={{ r: 0 }}
+          activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2, fill: CHART_COLORS.emerald, filter: 'drop-shadow(0px 0px 4px rgba(16, 185, 129, 0.8))' }}
+          filter="url(#neonGlow)"
         />
-      </AreaChart>
+      </LineChart>
     </ResponsiveContainer>
   )
 }
