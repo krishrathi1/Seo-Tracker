@@ -16,6 +16,7 @@ import {
   Users,
   Activity,
   Crown,
+  Globe,
 } from 'lucide-react'
 import {
   PieChart,
@@ -35,6 +36,7 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -45,6 +47,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
+import { useSeoStore } from '@/lib/seo-store'
 
 // ─── Types ────────────────────────────────────────────────────────────
 interface DashboardData {
@@ -143,20 +146,16 @@ function getScoreStroke(score: number): string {
 }
 
 // ─── Fetch hook ───────────────────────────────────────────────────────
-function useDashboard() {
+function useDashboard(projectId: string | null) {
   return useQuery<DashboardData>({
-    queryKey: ['seo-dashboard'],
+    queryKey: ['seo-dashboard', projectId],
     queryFn: async () => {
-      const res = await fetch('/api/seo/dashboard')
-      if (!res.ok) {
-        // Try seeding first
-        await fetch('/api/seo/seed', { method: 'POST' })
-        const retry = await fetch('/api/seo/dashboard')
-        if (!retry.ok) throw new Error('Failed to fetch dashboard data')
-        return retry.json()
-      }
+      const params = projectId ? `?projectId=${projectId}` : ''
+      const res = await fetch(`/api/seo/dashboard${params}`)
+      if (!res.ok) throw new Error('Failed to fetch dashboard data')
       return res.json()
     },
+    enabled: !!projectId,
     staleTime: 60_000,
   })
 }
@@ -650,9 +649,106 @@ function CompetitorComparison({ competitors }: { competitors: DashboardData['com
   )
 }
 
+// ─── Social Preview & Quick Actions ──────────────────────────────────
+function SocialPreviewAndActions({ data }: { data: DashboardData }) {
+  const domain = data.project.domain
+  const resetForNewAnalysis = useSeoStore((s) => s.resetForNewAnalysis)
+
+  return (
+    <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible">
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Globe className="h-4 w-4 text-emerald-500" />
+                Search Engine Preview
+              </CardTitle>
+              <CardDescription>How your site appears in Google search results</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-[10px] gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Analyzed
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1.5 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
+                onClick={resetForNewAnalysis}
+              >
+                <Activity className="h-3 w-3" />
+                New Analysis
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Google Preview */}
+            <div className="space-y-1 p-4 rounded-lg border bg-white dark:bg-zinc-950">
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                  <Globe className="h-3 w-3 text-emerald-600" />
+                </div>
+                <span className="text-xs text-gray-500">{domain}</span>
+              </div>
+              <h3 className="text-lg leading-snug text-[#1a0dab] truncate">
+                {data.project.name || domain}
+              </h3>
+              <p className="text-sm text-[#4d5156] line-clamp-2">
+                {data.keywords.total > 0
+                  ? `Explore ${data.project.name} — tracking ${data.keywords.total} keywords with an SEO score of ${data.healthScore}/100. ${data.backlinks.total} backlinks from ${data.backlinks.referringDomains} domains.`
+                  : `Analyze and optimize your website's SEO with RankPulse — the free, open-source SEO intelligence platform.`
+                }
+              </p>
+            </div>
+
+            {/* Social / Open Graph Preview */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Quick Stats</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  <div>
+                    <p className="text-sm font-bold">{data.healthScore}</p>
+                    <p className="text-[10px] text-muted-foreground">SEO Score</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-teal-50 dark:bg-teal-950/20">
+                  <Target className="h-4 w-4 text-teal-600" />
+                  <div>
+                    <p className="text-sm font-bold">{data.keywords.total}</p>
+                    <p className="text-[10px] text-muted-foreground">Keywords</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/20">
+                  <Link2 className="h-4 w-4 text-cyan-600" />
+                  <div>
+                    <p className="text-sm font-bold">{data.backlinks.total}</p>
+                    <p className="text-[10px] text-muted-foreground">Backlinks</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/20">
+                  <DollarSign className="h-4 w-4 text-amber-600" />
+                  <div>
+                    <p className="text-sm font-bold">{formatCurrency(data.traffic.estimatedValue)}</p>
+                    <p className="text-[10px] text-muted-foreground">Traffic Value</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
+
 // ─── Main Dashboard Module ────────────────────────────────────────────
 export function DashboardModule() {
-  const { data, isLoading, error } = useDashboard()
+  const activeProjectId = useSeoStore((s) => s.activeProjectId)
+  const { data, isLoading, error } = useDashboard(activeProjectId)
 
   if (isLoading) return <DashboardSkeleton />
 
@@ -683,7 +779,10 @@ export function DashboardModule() {
         {/* ── 1. Top Metric Cards ──────────────────────────── */}
         <MetricCards data={data} />
 
-        {/* ── 2. Keyword Distribution & Rank Trend ─────────── */}
+        {/* ── 2. Social Preview & Quick Actions ─────────────── */}
+        <SocialPreviewAndActions data={data} />
+
+        {/* ── 3. Keyword Distribution & Rank Trend ─────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="h-full">
@@ -710,7 +809,7 @@ export function DashboardModule() {
           </motion.div>
         </div>
 
-        {/* ── 3. Biggest Movers ────────────────────────────── */}
+        {/* ── 4. Biggest Movers ────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div custom={6} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="h-full">
@@ -743,7 +842,7 @@ export function DashboardModule() {
           </motion.div>
         </div>
 
-        {/* ── 4. Site Health & Audit + Backlink Profile ────── */}
+        {/* ── 5. Site Health & Audit + Backlink Profile ────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible">
             <Card className="h-full">
@@ -779,7 +878,7 @@ export function DashboardModule() {
           </motion.div>
         </div>
 
-        {/* ── 5. Competitor Comparison ─────────────────────── */}
+        {/* ── 6. Competitor Comparison ─────────────────────── */}
         <motion.div custom={10} variants={fadeUp} initial="hidden" animate="visible">
           <Card>
             <CardHeader className="pb-2">

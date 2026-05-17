@@ -222,19 +222,17 @@ function formatCurrency(n: number): string {
 
 // ─── Fetch hook ───────────────────────────────────────────────────────
 function useReportData() {
+  const activeProjectId = useSeoStore((s) => s.activeProjectId)
   return useQuery<ReportData>({
-    queryKey: ['seo-reports'],
+    queryKey: ['seo-reports', activeProjectId],
     queryFn: async () => {
-      const res = await fetch('/api/seo/reports?projectId=first')
-      if (!res.ok) {
-        await fetch('/api/seo/seed', { method: 'POST' })
-        const retry = await fetch('/api/seo/reports?projectId=first')
-        if (!retry.ok) throw new Error('Failed to fetch report data')
-        return retry.json()
-      }
+      const pid = activeProjectId || 'first'
+      const res = await fetch(`/api/seo/reports?projectId=${pid}`)
+      if (!res.ok) throw new Error('Failed to fetch report data')
       return res.json()
     },
     staleTime: 60_000,
+    enabled: !!activeProjectId,
   })
 }
 

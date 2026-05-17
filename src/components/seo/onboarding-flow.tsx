@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -63,10 +64,14 @@ const EXAMPLE_URLS = [
 
 // ─── Feature Cards Data ─────────────────────────────────────────────
 const FEATURES = [
-  { icon: Target, title: 'Keyword Tracking', description: 'Monitor rankings across search engines' },
-  { icon: ShieldCheck, title: 'Site Audit', description: 'Find technical SEO issues fast' },
-  { icon: Link, title: 'Backlink Analysis', description: 'Track your link profile health' },
-  { icon: Users, title: 'Competitor Intel', description: 'Analyze competitive landscape' },
+  { icon: Target, title: 'Keyword Tracking', description: 'AI-powered keyword discovery & tracking' },
+  { icon: ShieldCheck, title: 'Site Audit', description: 'Comprehensive technical SEO analysis' },
+  { icon: Link, title: 'Backlink Analysis', description: 'Monitor your link profile health' },
+  { icon: Users, title: 'Competitor Intel', description: 'Analyze & outrank competition' },
+  { icon: Search, title: 'AI Research', description: 'LLM-powered keyword research' },
+  { icon: Activity, title: 'AI Chat Assistant', description: 'Ask any SEO question to our AI' },
+  { icon: CheckCircle2, title: 'Content Optimizer', description: 'Score & optimize your content' },
+  { icon: Globe, title: 'Social Preview', description: 'See how your site looks in search' },
 ]
 
 // ─── Step Indicator Component ───────────────────────────────────────
@@ -342,12 +347,12 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
               {/* Tagline */}
               <motion.p
-                className="text-muted-foreground text-base mb-10"
+                className="text-muted-foreground text-base mb-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                Advanced SEO Intelligence Platform
+                Free & Open Source SEO Intelligence Platform
               </motion.p>
 
               {/* Search Input */}
@@ -429,9 +434,22 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 </Button>
               </motion.div>
 
+              {/* Open Source Badge */}
+              <motion.div
+                className="flex items-center gap-2 mt-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/25 gap-1.5 px-3 py-1 text-xs">
+                  <Activity className="h-3.5 w-3.5" />
+                  100% Free & Open Source · MIT License
+                </Badge>
+              </motion.div>
+
               {/* Feature Cards */}
               <motion.div
-                className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-12 w-full"
+                className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5 w-full"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.5 }}
@@ -441,12 +459,12 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                     key={feature.title}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 + i * 0.1 }}
+                    transition={{ delay: 0.7 + i * 0.08 }}
                   >
                     <Card className="border-border/50 bg-background/40 backdrop-blur-sm hover:border-emerald-300/50 dark:hover:border-emerald-700/50 transition-colors duration-200">
-                      <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                        <feature.icon className="h-5 w-5 text-emerald-600 dark:text-emerald-500" />
-                        <span className="text-xs font-semibold">{feature.title}</span>
+                      <CardContent className="p-3 flex flex-col items-center text-center gap-1.5">
+                        <feature.icon className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-500" />
+                        <span className="text-[11px] font-semibold">{feature.title}</span>
                         <span className="text-[10px] text-muted-foreground leading-tight">{feature.description}</span>
                       </CardContent>
                     </Card>
@@ -691,9 +709,15 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
       {/* Footer */}
       <div className="relative z-10 text-center py-4">
-        <p className="text-xs text-muted-foreground/60">
-          RankPulse &middot; Powered by AI-driven SEO intelligence
-        </p>
+        <div className="flex items-center justify-center gap-4">
+          <p className="text-xs text-muted-foreground/60">
+            RankPulse &middot; Open Source SEO Platform
+          </p>
+          <span className="text-xs text-muted-foreground/40">|</span>
+          <p className="text-xs text-muted-foreground/60">
+            MIT License &middot; No Sign Up Required
+          </p>
+        </div>
       </div>
     </div>
   )

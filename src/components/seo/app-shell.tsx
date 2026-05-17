@@ -32,6 +32,7 @@ import { AlertsModule } from "@/components/seo/alerts-module"
 import { KeywordResearchModule } from "@/components/seo/keyword-research-module"
 import { ReportsModule } from "@/components/seo/reports-module"
 import { SettingsModule } from "@/components/seo/settings-module"
+import { AiChatAssistant } from "@/components/seo/ai-chat-assistant"
 import { cn } from "@/lib/utils"
 import { DashboardModule } from "@/components/seo/dashboard-module"
 import {
@@ -439,7 +440,7 @@ function AppHeader() {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">John Doe</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  john@techventure.io
+                  user@rankpulse.io
                 </p>
               </div>
             </DropdownMenuLabel>
@@ -552,15 +553,25 @@ export function AppShell() {
 
         <SidebarFooter>
           <SidebarSeparator />
+          {/* Open Source Badge */}
+          <div className="px-2 group-data-[collapsible=icon]:hidden">
+            <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-2">
+              <Activity className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Free & Open Source</p>
+                <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/60">v1.0.0 · MIT License</p>
+              </div>
+            </div>
+          </div>
           <div className="flex items-center gap-2 px-2 group-data-[collapsible=icon]:justify-center">
             <Avatar className="h-7 w-7">
               <AvatarFallback className="bg-primary/15 text-primary text-[10px] font-semibold">
-                JD
+                RP
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-              <span className="text-xs font-medium text-sidebar-foreground">John Doe</span>
-              <span className="text-[10px] text-sidebar-foreground/50">Pro Plan</span>
+              <span className="text-xs font-medium text-sidebar-foreground">RankPulse</span>
+              <span className="text-[10px] text-sidebar-foreground/50">Community Edition</span>
             </div>
           </div>
         </SidebarFooter>
@@ -572,6 +583,9 @@ export function AppShell() {
         <AppHeader />
         <ModuleContent moduleKey={activeModule} />
       </SidebarInset>
+
+      {/* Floating AI Chat Assistant */}
+      <AiChatAssistant />
     </SidebarProvider>
   )
 }

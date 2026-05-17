@@ -79,6 +79,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 import { cn } from '@/lib/utils'
+import { useSeoStore } from '@/lib/seo-store'
 
 // ─── Types ────────────────────────────────────────────────────────────────
 interface AuditIssue {
@@ -393,7 +394,8 @@ function useAuditData(projectId: string) {
 
 // ─── Main Component ───────────────────────────────────────────────────────
 export function SiteAuditModule() {
-  const projectId = 'first' // will use the first project from seed
+  const activeProjectId = useSeoStore((s) => s.activeProjectId)
+  const projectId = activeProjectId ?? 'first'
 
   const { data, isLoading, error } = useAuditData(projectId)
   const [isRunningAudit, setIsRunningAudit] = React.useState(false)
