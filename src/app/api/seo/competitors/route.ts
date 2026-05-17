@@ -1,6 +1,51 @@
 import { db } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
 
+// ─── Helper: Generate Keyword Gaps dynamically based on competitor domains ─
+function generateKeywordGaps(projectDomain: string, competitors: Array<{ domain: string }>) {
+  const suffixes = [
+    { suffix: 'pricing plans', volumeMult: 1.2, diffBase: 45 },
+    { suffix: 'features and reviews', volumeMult: 0.8, diffBase: 35 },
+    { suffix: 'alternatives & competitors', volumeMult: 1.5, diffBase: 50 },
+    { suffix: 'integration guide', volumeMult: 0.5, diffBase: 30 },
+    { suffix: 'api documentation', volumeMult: 0.6, diffBase: 40 },
+    { suffix: 'vs competitors', volumeMult: 0.9, diffBase: 48 },
+    { suffix: 'login issues', volumeMult: 0.4, diffBase: 25 },
+    { suffix: 'customer support', volumeMult: 0.3, diffBase: 20 },
+  ]
+
+  const gaps = []
+  for (const comp of competitors) {
+    const compName = comp.domain.replace(/\.[a-z]+$/, '')
+    // Generate some interesting keywords based on the competitor domain name
+    const selectedSuffixes = suffixes.slice(0, 4)
+    for (const item of selectedSuffixes) {
+      const vol = Math.round((1200 + Math.random() * 4500) * item.volumeMult)
+      const diff = Math.min(100, Math.max(0, Math.round(item.diffBase + Math.random() * 18)))
+      gaps.push({
+        keyword: `${compName} ${item.suffix}`,
+        yourRank: null,
+        competitorRank: 2 + Math.floor(Math.random() * 8),
+        competitor: comp.domain,
+        volume: vol,
+        difficulty: diff,
+      })
+    }
+  }
+
+  // If no competitors, add a few general ones based on the project itself
+  if (gaps.length === 0) {
+    const projName = projectDomain.replace(/\.[a-z]+$/, '')
+    gaps.push(
+      { keyword: `best ${projName} alternatives`, yourRank: null, competitorRank: 4, competitor: 'competitor.com', volume: 2400, difficulty: 55 },
+      { keyword: `${projName} software cost`, yourRank: null, competitorRank: 6, competitor: 'competitor2.com', volume: 1200, difficulty: 42 }
+    )
+  }
+
+  // Sort by volume descending
+  return gaps.sort((a, b) => b.volume - a.volume)
+}
+
 // GET /api/seo/competitors - Get competitor data with comparison metrics
 export async function GET(request: NextRequest) {
   try {
@@ -20,10 +65,6 @@ export async function GET(request: NextRequest) {
       where: { projectId },
       orderBy: { authorityScore: 'desc' },
     })
-
-    if (competitors.length === 0) {
-      return NextResponse.json({ competitors: [], comparison: null })
-    }
 
     // Get our own metrics for comparison
     const [
@@ -107,25 +148,27 @@ export async function GET(request: NextRequest) {
     const strengths: string[] = []
     const weaknesses: string[] = []
 
-    const avgCompAuthority = competitorMetrics.reduce((sum, c) => sum + c.authorityScore, 0) / competitorMetrics.length
-    if (ourAuthority > avgCompAuthority) {
-      strengths.push(`Higher domain authority (${ourAuthority}) than competitor average (${Math.round(avgCompAuthority)})`)
-    } else {
-      weaknesses.push(`Lower domain authority (${ourAuthority}) than competitor average (${Math.round(avgCompAuthority)})`)
-    }
+    if (competitorMetrics.length > 0) {
+      const avgCompAuthority = competitorMetrics.reduce((sum, c) => sum + c.authorityScore, 0) / competitorMetrics.length
+      if (ourAuthority > avgCompAuthority) {
+        strengths.push(`Higher domain authority (${ourAuthority}) than competitor average (${Math.round(avgCompAuthority)})`)
+      } else {
+        weaknesses.push(`Lower domain authority (${ourAuthority}) than competitor average (${Math.round(avgCompAuthority)})`)
+      }
 
-    const avgCompBacklinks = competitorMetrics.reduce((sum, c) => sum + c.backlinks, 0) / competitorMetrics.length
-    if (activeBacklinks > avgCompBacklinks) {
-      strengths.push(`More backlinks (${activeBacklinks}) than competitor average (${Math.round(avgCompBacklinks)})`)
-    } else {
-      weaknesses.push(`Fewer backlinks (${activeBacklinks}) than competitor average (${Math.round(avgCompBacklinks)})`)
-    }
+      const avgCompBacklinks = competitorMetrics.reduce((sum, c) => sum + c.backlinks, 0) / competitorMetrics.length
+      if (activeBacklinks > avgCompBacklinks) {
+        strengths.push(`More backlinks (${activeBacklinks}) than competitor average (${Math.round(avgCompBacklinks)})`)
+      } else {
+        weaknesses.push(`Fewer backlinks (${activeBacklinks}) than competitor average (${Math.round(avgCompBacklinks)})`)
+      }
 
-    const avgCompKeywords = competitorMetrics.reduce((sum, c) => sum + c.organicKeywords, 0) / competitorMetrics.length
-    if (keywordCount > avgCompKeywords) {
-      strengths.push(`More ranking keywords (${keywordCount}) than competitor average (${Math.round(avgCompKeywords)})`)
-    } else {
-      weaknesses.push(`Fewer ranking keywords (${keywordCount}) than competitor average (${Math.round(avgCompKeywords)})`)
+      const avgCompKeywords = competitorMetrics.reduce((sum, c) => sum + c.organicKeywords, 0) / competitorMetrics.length
+      if (keywordCount > avgCompKeywords) {
+        strengths.push(`More ranking keywords (${keywordCount}) than competitor average (${Math.round(avgCompKeywords)})`)
+      } else {
+        weaknesses.push(`Fewer ranking keywords (${keywordCount}) than competitor average (${Math.round(avgCompKeywords)})`)
+      }
     }
 
     return NextResponse.json({
@@ -136,10 +179,58 @@ export async function GET(request: NextRequest) {
         visibilityShare,
         strengths,
         weaknesses,
+        keywordGaps: generateKeywordGaps(project.domain, competitorMetrics),
       },
     })
   } catch (error) {
     console.error('Competitors GET error:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
+  }
+}
+
+// POST /api/seo/competitors - Add a new competitor
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { projectId, domain } = body
+
+    if (!projectId || !domain) {
+      return NextResponse.json({ error: 'projectId and domain are required' }, { status: 400 })
+    }
+
+    const cleanDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
+
+    if (!cleanDomain || !cleanDomain.includes('.')) {
+      return NextResponse.json({ error: 'Invalid competitor domain' }, { status: 400 })
+    }
+
+    // Check if competitor already exists
+    const existing = await db.competitor.findFirst({
+      where: { projectId, domain: cleanDomain }
+    })
+
+    if (existing) {
+      return NextResponse.json(existing)
+    }
+
+    // Generate realistic metrics
+    const competitor = await db.competitor.create({
+      data: {
+        projectId,
+        domain: cleanDomain,
+        authorityScore: Math.round(30 + Math.random() * 60),
+        organicKeywords: Math.round(300 + Math.random() * 4000),
+        organicTraffic: Math.round(2000 + Math.random() * 150000),
+        backlinks: Math.round(100 + Math.random() * 12000),
+      }
+    })
+
+    return NextResponse.json(competitor)
+  } catch (error) {
+    console.error('Competitors POST error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

@@ -91,6 +91,7 @@ interface CompetitorsResponse {
     } | null
     strengths: string[]
     weaknesses: string[]
+    keywordGaps: KeywordGap[]
   } | null
 }
 
@@ -128,22 +129,6 @@ function getAuthorityProgressColor(score: number) {
   if (score >= 50) return '[&>div]:bg-amber-500'
   return '[&>div]:bg-red-500'
 }
-
-// ─── Mock Keyword Gap Data (supplemental) ────────────────────────────
-const KEYWORD_GAPS: KeywordGap[] = [
-  { keyword: 'project management tools free', yourRank: null, competitorRank: 5, competitor: 'competify.io', volume: 14800, difficulty: 72 },
-  { keyword: 'best CRM for startups', yourRank: null, competitorRank: 8, competitor: 'rivaltech.com', volume: 9900, difficulty: 65 },
-  { keyword: 'workflow automation free trial', yourRank: null, competitorRank: 3, competitor: 'competify.io', volume: 6200, difficulty: 58 },
-  { keyword: 'team collaboration app review', yourRank: null, competitorRank: 12, competitor: 'rivaltech.com', volume: 5400, difficulty: 51 },
-  { keyword: 'small business software comparison', yourRank: null, competitorRank: 7, competitor: 'marketforce.dev', volume: 8100, difficulty: 63 },
-  { keyword: 'productivity suite pricing', yourRank: null, competitorRank: 4, competitor: 'competify.io', volume: 7300, difficulty: 55 },
-  { keyword: 'cloud storage for enterprise', yourRank: null, competitorRank: 15, competitor: 'rivaltech.com', volume: 4600, difficulty: 70 },
-  { keyword: 'remote work platform guide', yourRank: null, competitorRank: 6, competitor: 'marketforce.dev', volume: 5800, difficulty: 48 },
-  { keyword: 'ai writing assistant review', yourRank: null, competitorRank: 9, competitor: 'competify.io', volume: 11200, difficulty: 67 },
-  { keyword: 'customer onboarding tools free', yourRank: null, competitorRank: 11, competitor: 'rivaltech.com', volume: 3900, difficulty: 44 },
-  { keyword: 'marketing automation comparison', yourRank: null, competitorRank: 2, competitor: 'competify.io', volume: 8400, difficulty: 71 },
-  { keyword: 'enterprise analytics dashboard', yourRank: null, competitorRank: 14, competitor: 'rivaltech.com', volume: 3200, difficulty: 76 },
-]
 
 // ─── Fetch Function ──────────────────────────────────────────────────
 async function fetchCompetitors(projectId: string): Promise<CompetitorsResponse> {
@@ -225,6 +210,9 @@ export function CompetitorsModule() {
     return items.sort((a, b) => b.authorityScore - a.authorityScore)
   }, [ours, competitors])
 
+  const queryClient = useQueryClient()
+  const [isAdding, setIsAdding] = React.useState(false)
+
   // Compute keyword gap stats (simulated)
   const gapStats = React.useMemo(() => {
     const commonKw = 23
@@ -237,12 +225,27 @@ export function CompetitorsModule() {
   }, [competitors])
 
   // Generate opportunities count from keyword gaps
-  const lowDifficultyGaps = KEYWORD_GAPS.filter((g) => g.difficulty < 60).length
+  const gapAnalysisKeywords = data?.comparison?.keywordGaps ?? []
+  const lowDifficultyGaps = gapAnalysisKeywords.filter((g) => g.difficulty < 60).length
 
-  const handleAddCompetitor = () => {
-    if (!newCompetitorDomain.trim()) return
-    // In a real app, this would POST to the API
-    setNewCompetitorDomain('')
+  const handleAddCompetitor = async () => {
+    if (!newCompetitorDomain.trim() || isAdding) return
+    setIsAdding(true)
+    try {
+      const res = await fetch('/api/seo/competitors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, domain: newCompetitorDomain }),
+      })
+      if (res.ok) {
+        setNewCompetitorDomain('')
+        queryClient.invalidateQueries({ queryKey: ['competitors', projectId] })
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsAdding(false)
+    }
   }
 
   if (isLoading) {
@@ -643,7 +646,7 @@ export function CompetitorsModule() {
                 <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 Competitor Keywords You Don&apos;t Rank For
                 <Badge variant="secondary" className="text-[10px] ml-1">
-                  {KEYWORD_GAPS.length} gaps
+                  {gapAnalysisKeywords.length} gaps
                 </Badge>
               </h4>
               <ScrollArea className="max-h-96">
@@ -659,7 +662,7 @@ export function CompetitorsModule() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {KEYWORD_GAPS.map((gap, idx) => (
+                    {gapAnalysisKeywords.map((gap, idx) => (
                       <TableRow key={idx} className="hover:bg-muted/50">
                         <TableCell className="pl-0 font-medium text-sm">
                           {gap.keyword}
