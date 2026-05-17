@@ -850,49 +850,48 @@ function GradeBreakdown({ data }: { data: DashboardData }) {
   const overallScore = Math.round((technicalScore + contentScore + authorityScore + experienceScore) / 4)
 
   const grades = [
-    { label: 'Technical SEO', icon: Wrench, score: technicalScore, description: 'Site structure, speed & crawlability' },
-    { label: 'Content', icon: Target, score: contentScore, description: 'Keyword rankings & content quality' },
-    { label: 'Authority', icon: Link2, score: authorityScore, description: 'Backlinks & referring domains' },
-    { label: 'Experience', icon: Smartphone, score: experienceScore, description: 'Mobile, SSL & user experience' },
+    { label: 'Technical SEO', icon: Wrench, score: technicalScore, description: 'Site structure, speed & crawlability', gradient: 'from-emerald-500 to-teal-400' },
+    { label: 'Content', icon: Target, score: contentScore, description: 'Keyword rankings & content quality', gradient: 'from-cyan-500 to-blue-400' },
+    { label: 'Authority', icon: Link2, score: authorityScore, description: 'Backlinks & referring domains', gradient: 'from-indigo-500 to-purple-400' },
+    { label: 'Experience', icon: Smartphone, score: experienceScore, description: 'Mobile, SSL & user experience', gradient: 'from-amber-500 to-orange-400' },
   ]
 
   return (
     <motion.div custom={1} variants={fadeUp} initial="hidden" animate="visible">
-      <Card>
+      <Card className="hover:shadow-md transition-all duration-300">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              <ShieldCheck className="h-4 w-4 text-emerald-500 animate-pulse" />
               <div>
-                <CardTitle className="text-base">SEO Grade Breakdown</CardTitle>
+                <CardTitle className="text-base font-semibold">SEO Grade Breakdown</CardTitle>
                 <CardDescription>Performance across key SEO categories</CardDescription>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Overall</span>
+              <span className="text-xs text-muted-foreground font-medium">Overall</span>
               <GradeBadge score={overallScore} size="lg" />
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {grades.map((grade) => {
-            const gradeInfo = getGrade(grade.score)
             return (
               <div key={grade.label} className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <grade.icon className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-sm font-medium">{grade.label}</span>
-                    <span className="text-[10px] text-muted-foreground">{grade.description}</span>
+                    <grade.icon className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+                    <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{grade.label}</span>
+                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400 hidden sm:inline">{grade.description}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs tabular-nums text-muted-foreground">{grade.score}/100</span>
+                    <span className="text-xs tabular-nums font-semibold text-zinc-600 dark:text-zinc-400">{grade.score}/100</span>
                     <GradeBadge score={grade.score} />
                   </div>
                 </div>
-                <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/30">
+                <div className="relative h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800/40">
                   <div
-                    className={cn('h-full rounded-full transition-all duration-700', gradeInfo.color)}
+                    className={cn('h-full rounded-full transition-all duration-1000 bg-gradient-to-r', grade.gradient)}
                     style={{ width: `${grade.score}%` }}
                   />
                 </div>
@@ -1023,22 +1022,41 @@ function PriorityIssues({ data }: { data: DashboardData }) {
 function SocialPreviewAndActions({ data }: { data: DashboardData }) {
   const domain = data.project.domain
   const resetForNewAnalysis = useSeoStore((s) => s.resetForNewAnalysis)
+  const [device, setDevice] = React.useState<'desktop' | 'mobile'>('desktop')
 
   return (
     <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible">
-      <Card>
+      <Card className="hover:shadow-md transition-all duration-300">
         <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <CardTitle className="text-base flex items-center gap-2">
+              <CardTitle className="text-base flex items-center gap-2 font-semibold">
                 <Globe className="h-4 w-4 text-emerald-500" />
                 Search Engine Preview
               </CardTitle>
               <CardDescription>How your site appears in Google search results</CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-[10px] gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-0.5 bg-zinc-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-zinc-200/50 dark:border-zinc-700/50">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn('h-6 w-8 rounded-md p-0', device === 'desktop' ? 'bg-white dark:bg-zinc-950 shadow-xs text-foreground' : 'text-muted-foreground hover:text-foreground')}
+                  onClick={() => setDevice('desktop')}
+                >
+                  <Monitor className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn('h-6 w-8 rounded-md p-0', device === 'mobile' ? 'bg-white dark:bg-zinc-950 shadow-xs text-foreground' : 'text-muted-foreground hover:text-foreground')}
+                  onClick={() => setDevice('mobile')}
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              <Badge variant="outline" className="text-[10px] gap-1 h-7 border-emerald-200/50 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Analyzed
               </Badge>
               <Button
@@ -1054,42 +1072,72 @@ function SocialPreviewAndActions({ data }: { data: DashboardData }) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
             {/* Google Preview */}
-            <div className="space-y-1 p-4 rounded-lg border bg-white dark:bg-zinc-950">
-              <div className="flex items-center gap-2">
-                <div className="h-5 w-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
-                  <Globe className="h-3 w-3 text-emerald-600" />
+            <div className="w-full flex items-center justify-center p-2 rounded-xl bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-100 dark:border-zinc-800/40 min-h-[170px]">
+              {device === 'mobile' ? (
+                <div className="w-full max-w-[320px] border-[5px] border-zinc-200 dark:border-zinc-800 rounded-[28px] p-3.5 bg-white dark:bg-zinc-950 shadow-sm relative">
+                  {/* Speaker & notch */}
+                  <div className="w-20 h-3 bg-zinc-200 dark:bg-zinc-800 rounded-full mx-auto mb-3 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-zinc-400/50" />
+                  </div>
+                  {/* Mobile Preview Content */}
+                  <div className="space-y-1 text-left">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-4 w-4 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200/50 dark:border-zinc-800/50">
+                        <Globe className="h-2.5 w-2.5 text-zinc-600 dark:text-zinc-400" />
+                      </div>
+                      <span className="text-[10px] text-gray-500 dark:text-zinc-400 font-medium truncate">{domain}</span>
+                    </div>
+                    <h3 className="text-sm font-semibold leading-tight text-[#1a0dab] dark:text-[#8ab4f8] truncate cursor-pointer hover:underline">
+                      {data.project.name || domain}
+                    </h3>
+                    <p className="text-[11px] text-[#4d5156] dark:text-zinc-300 line-clamp-3 leading-relaxed">
+                      {data.keywords.total > 0
+                        ? `Explore ${data.project.name} — tracking ${data.keywords.total} keywords with an SEO score of ${data.healthScore}/100. ${data.backlinks.total} backlinks from ${data.backlinks.referringDomains} domains.`
+                        : `Analyze and optimize your website's SEO with RankPulse — the free, open-source SEO intelligence platform.`
+                      }
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs text-gray-500">{domain}</span>
-              </div>
-              <h3 className="text-lg leading-snug text-[#1a0dab] truncate">
-                {data.project.name || domain}
-              </h3>
-              <p className="text-sm text-[#4d5156] line-clamp-2">
-                {data.keywords.total > 0
-                  ? `Explore ${data.project.name} — tracking ${data.keywords.total} keywords with an SEO score of ${data.healthScore}/100. ${data.backlinks.total} backlinks from ${data.backlinks.referringDomains} domains.`
-                  : `Analyze and optimize your website's SEO with RankPulse — the free, open-source SEO intelligence platform.`
-                }
-              </p>
+              ) : (
+                /* Desktop Preview Content */
+                <div className="w-full space-y-1.5 p-4 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200/60 dark:border-zinc-800/60 shadow-xs text-left">
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                      <Globe className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-zinc-400 font-medium">{domain}</span>
+                  </div>
+                  <h3 className="text-lg leading-snug text-[#1a0dab] dark:text-[#8ab4f8] hover:underline cursor-pointer font-medium truncate">
+                    {data.project.name || domain}
+                  </h3>
+                  <p className="text-sm text-[#4d5156] dark:text-zinc-300 leading-relaxed line-clamp-2">
+                    {data.keywords.total > 0
+                      ? `Explore ${data.project.name} — tracking ${data.keywords.total} keywords with an SEO score of ${data.healthScore}/100. ${data.backlinks.total} backlinks from ${data.backlinks.referringDomains} domains.`
+                      : `Analyze and optimize your website's SEO with RankPulse — the free, open-source SEO intelligence platform.`
+                    }
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Social / Open Graph Preview */}
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Quick Stats</p>
+            <div className="space-y-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quick Stats</p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20">
-                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100/50 dark:border-emerald-900/20 hover:scale-[1.02] transition-transform duration-300">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   <div>
-                    <p className="text-sm font-bold">{data.healthScore}</p>
-                    <p className="text-[10px] text-muted-foreground">SEO Score</p>
+                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">{data.healthScore}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">SEO Score</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-teal-50 dark:bg-teal-950/20">
-                  <Target className="h-4 w-4 text-teal-600" />
+                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-teal-50 dark:bg-teal-950/20 border border-teal-100/50 dark:border-teal-900/20 hover:scale-[1.02] transition-transform duration-300">
+                  <Target className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                   <div>
-                    <p className="text-sm font-bold">{data.keywords.total}</p>
-                    <p className="text-[10px] text-muted-foreground">Keywords</p>
+                    <p className="text-sm font-bold text-teal-700 dark:text-teal-400">{data.keywords.total}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">Keywords</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 p-2.5 rounded-lg bg-cyan-50 dark:bg-cyan-950/20">
