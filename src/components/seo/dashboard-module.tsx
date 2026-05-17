@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   Wrench,
   Smartphone,
+  Monitor,
   Lock,
 } from 'lucide-react'
 import {
@@ -439,40 +440,50 @@ function KeywordDistributionChart({ distribution }: { distribution: DashboardDat
     { name: '50+', value: distribution.rank50Plus, color: CHART_COLORS.rose },
   ].filter(d => d.value > 0)
 
+  const total = data.reduce((acc, curr) => acc + curr.value, 0)
+
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          innerRadius={70}
-          outerRadius={110}
-          paddingAngle={3}
-          dataKey="value"
-          stroke="none"
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip
-          contentStyle={{
-            backgroundColor: 'hsl(var(--card))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px',
-            fontSize: '12px',
-          }}
-          formatter={(value: number, name: string) => [`${value} keywords`, name]}
-        />
-        <Legend
-          verticalAlign="bottom"
-          iconType="circle"
-          iconSize={8}
-          formatter={(value: string) => <span className="text-xs text-muted-foreground">{value}</span>}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="relative flex items-center justify-center">
+      <ResponsiveContainer width="100%" height={280}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={70}
+            outerRadius={105}
+            paddingAngle={3}
+            dataKey="value"
+            stroke="none"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              backgroundColor: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: '8px',
+              fontSize: '12px',
+            }}
+            formatter={(value: number, name: string) => [`${value} keywords`, name]}
+          />
+          <Legend
+            verticalAlign="bottom"
+            iconType="circle"
+            iconSize={8}
+            formatter={(value: string) => <span className="text-xs text-muted-foreground">{value}</span>}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
+        <span className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums">
+          {total}
+        </span>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Keywords</span>
+      </div>
+    </div>
   )
 }
 
@@ -687,25 +698,33 @@ function CompetitorComparison({ competitors }: { competitors: DashboardData['com
       </TableHeader>
       <TableBody>
         {allRows.map((row, index) => (
-          <TableRow key={`${row.domain}-${row.isOurs ? 'ours' : index}`} className={row.isOurs ? 'bg-emerald-500/5' : ''}>
-            <TableCell className="text-xs font-medium">
+          <TableRow key={`${row.domain}-${row.isOurs ? 'ours' : index}`} className={row.isOurs ? 'bg-emerald-500/5 hover:bg-emerald-500/10' : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/50'}>
+            <TableCell className="text-xs font-medium py-3">
               <div className="flex items-center gap-2">
+                <img
+                  src={`https://www.google.com/s2/favicons?sz=64&domain=${row.domain}`}
+                  alt=""
+                  className="h-4 w-4 rounded-sm object-contain bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shrink-0"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = `https://favicons.githubusercontent.com/g/${row.domain}`
+                  }}
+                />
                 {row.isOurs && (
-                  <Badge className="bg-emerald-500/15 text-emerald-600 text-[9px] px-1.5 py-0 border-0 font-semibold">
-                    <Crown className="h-2.5 w-2.5 mr-0.5" />YOU
+                  <Badge className="bg-emerald-500/15 text-emerald-600 text-[9px] px-1.5 py-0.5 border-0 font-bold tracking-wider shrink-0 flex items-center">
+                    <Crown className="h-2.5 w-2.5 mr-0.5 text-emerald-500" />YOU
                   </Badge>
                 )}
-                {row.domain}
+                <span className="truncate max-w-[200px]">{row.domain}</span>
               </div>
             </TableCell>
             <TableCell className="text-xs text-right tabular-nums">
-              <span className={cn('font-medium', row.authorityScore >= 70 ? 'text-emerald-500' : row.authorityScore >= 50 ? 'text-amber-500' : 'text-rose-500')}>
+              <span className={cn('font-bold', row.authorityScore >= 70 ? 'text-emerald-500' : row.authorityScore >= 50 ? 'text-amber-500' : 'text-rose-500')}>
                 {row.authorityScore}
               </span>
             </TableCell>
-            <TableCell className="text-xs text-right tabular-nums">{formatNumber(row.organicKeywords)}</TableCell>
-            <TableCell className="text-xs text-right tabular-nums">{formatNumber(row.organicTraffic)}</TableCell>
-            <TableCell className="text-xs text-right tabular-nums">{formatNumber(row.backlinks)}</TableCell>
+            <TableCell className="text-xs text-right tabular-nums font-medium text-zinc-700 dark:text-zinc-300">{formatNumber(row.organicKeywords)}</TableCell>
+            <TableCell className="text-xs text-right tabular-nums font-medium text-zinc-700 dark:text-zinc-300">{formatNumber(row.organicTraffic)}</TableCell>
+            <TableCell className="text-xs text-right tabular-nums font-medium text-zinc-700 dark:text-zinc-300">{formatNumber(row.backlinks)}</TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -764,11 +783,21 @@ function QuickActions({ data }: { data: DashboardData }) {
         <CardContent className="pt-0">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 relative">
                 <Zap className="h-4.5 w-4.5 text-emerald-500" />
+                <span className="absolute top-0 right-0 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
               </div>
               <div>
-                <p className="text-sm font-semibold">Quick Actions</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold">Quick Actions</p>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/20">
+                    <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+                    Live Web Crawler Active
+                  </span>
+                </div>
                 <p className="text-xs text-muted-foreground">Common tasks and shortcuts</p>
               </div>
             </div>
