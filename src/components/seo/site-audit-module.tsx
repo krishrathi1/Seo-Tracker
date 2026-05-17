@@ -859,7 +859,7 @@ export function SiteAuditModule() {
                 .sort(([, a], [, b]) => b.count - a.count)
                 .map(([key, catData]) => {
                   const catConfig = CATEGORY_CONFIG[key]
-                  const catIcon = catConfig?.icon ?? Layout
+                  const CatIcon = catConfig?.icon ?? Layout
                   const catLabel = catConfig?.label ?? formatCategoryKey(key)
                   const catColor = catConfig?.color ?? '#10b981'
                   const catIssues = allIssues.filter((i) => i.category === key)
@@ -875,7 +875,7 @@ export function SiteAuditModule() {
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex items-center gap-3 flex-1 pr-4">
                           <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: catColor + '15' }}>
-                            <catIcon className="h-4 w-4" style={{ color: catColor }} />
+                            <CatIcon className="h-4 w-4" style={{ color: catColor }} />
                           </div>
                           <div className="flex-1 text-left">
                             <div className="flex items-center gap-2">
