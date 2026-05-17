@@ -444,6 +444,23 @@ function KeywordDistributionChart({ distribution }: { distribution: DashboardDat
 
   const total = data.reduce((acc, curr) => acc + curr.value, 0)
 
+  const DonutTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const d = payload[0]
+      const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : '0'
+      return (
+        <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 bg-white/90 dark:bg-zinc-950/90 px-3 py-2 shadow-lg backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.payload.color }} />
+            <span className="text-xs font-semibold">{d.name}</span>
+          </div>
+          <p className="mt-0.5 text-sm font-bold tabular-nums">{d.value} <span className="text-xs font-normal text-muted-foreground">keywords ({pct}%)</span></p>
+        </div>
+      )
+    }
+    return null
+  }
+
   return (
     <div className="relative flex items-center justify-center">
       <ResponsiveContainer width="100%" height={280}>
@@ -452,30 +469,23 @@ function KeywordDistributionChart({ distribution }: { distribution: DashboardDat
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={70}
-            outerRadius={105}
-            paddingAngle={3}
+            innerRadius={72}
+            outerRadius={108}
+            paddingAngle={2}
             dataKey="value"
-            stroke="none"
+            stroke="hsl(var(--card))"
+            strokeWidth={2}
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip
-            contentStyle={{
-              backgroundColor: 'hsl(var(--card))',
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '8px',
-              fontSize: '12px',
-            }}
-            formatter={(value: number, name: string) => [`${value} keywords`, name]}
-          />
+          <Tooltip content={<DonutTooltip />} />
           <Legend
             verticalAlign="bottom"
             iconType="circle"
-            iconSize={8}
-            formatter={(value: string) => <span className="text-xs text-muted-foreground">{value}</span>}
+            iconSize={7}
+            formatter={(value: string) => <span className="text-[11px] text-muted-foreground">{value}</span>}
           />
         </PieChart>
       </ResponsiveContainer>
@@ -483,7 +493,7 @@ function KeywordDistributionChart({ distribution }: { distribution: DashboardDat
         <span className="text-3xl font-extrabold tracking-tight text-foreground tabular-nums">
           {total}
         </span>
-        <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Keywords</span>
+        <span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/70">Keywords</span>
       </div>
     </div>
   )
@@ -605,31 +615,39 @@ function AuditIssuesChart({ issues }: { issues: DashboardData['audit']['issueBre
     { name: 'Info', value: issues.info, color: SEVERITY_COLORS.info },
   ]
 
+  const AuditTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const d = payload[0]
+      return (
+        <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 bg-white/90 dark:bg-zinc-950/90 px-3 py-2 shadow-lg backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: d.payload.color }} />
+            <span className="text-xs font-semibold">{d.payload.name}</span>
+          </div>
+          <p className="mt-0.5 text-sm font-bold tabular-nums">{d.value} <span className="text-xs font-normal text-muted-foreground">issues</span></p>
+        </div>
+      )
+    }
+    return null
+  }
+
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} horizontal={false} />
-        <XAxis type="number" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+        <CartesianGrid strokeDasharray="4 4" stroke="hsl(var(--border))" opacity={0.3} horizontal={false} />
+        <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 500 }} axisLine={false} tickLine={false} />
         <YAxis
           type="category"
           dataKey="name"
-          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+          tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 500 }}
           axisLine={false}
           tickLine={false}
-          width={65}
+          width={60}
         />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: 'hsl(var(--card))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px',
-            fontSize: '12px',
-          }}
-          formatter={(value: number) => [`${value} issues`, '']}
-        />
-        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
+        <Tooltip content={<AuditTooltip />} cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4, radius: 4 }} />
+        <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={18}>
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
+            <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.85} />
           ))}
         </Bar>
       </BarChart>
@@ -639,7 +657,6 @@ function AuditIssuesChart({ issues }: { issues: DashboardData['audit']['issueBre
 
 // ─── Backlink Profile Chart ───────────────────────────────────────────
 function BacklinkProfileChart({ newCount, lostCount }: { newCount: number; lostCount: number }) {
-  // Create a simulated monthly new/lost backlinks chart based on the totals
   const months = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
   const newPerMonth = Math.max(1, Math.round(newCount / 12))
   const lostPerMonth = Math.max(1, Math.round(lostCount / 12))
@@ -650,31 +667,41 @@ function BacklinkProfileChart({ newCount, lostCount }: { newCount: number; lostC
     lost: i < 11 ? Math.max(0, lostPerMonth + Math.floor(Math.cos(i * 0.9) * 2)) : lostCount - lostPerMonth * 10,
   }))
 
-  // Ensure last month has the actual values
   data[data.length - 1].new = newCount - data.slice(0, -1).reduce((s, d) => s + d.new, 0)
   data[data.length - 1].lost = lostCount - data.slice(0, -1).reduce((s, d) => s + d.lost, 0)
+
+  const LinkTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 bg-white/90 dark:bg-zinc-950/90 px-3 py-2 shadow-lg backdrop-blur-md">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{label}</p>
+          {payload.map((p: any) => (
+            <div key={p.dataKey} className="flex items-center gap-2 text-xs">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: p.fill }} />
+              <span className="text-muted-foreground">{p.dataKey === 'new' ? 'Acquired' : 'Lost'}:</span>
+              <span className="font-bold tabular-nums">{p.value}</span>
+            </div>
+          ))}
+        </div>
+      )
+    }
+    return null
+  }
 
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-        <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: 'hsl(var(--card))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px',
-            fontSize: '12px',
-          }}
-        />
+        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
+        <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 500 }} axisLine={false} tickLine={false} dy={8} />
+        <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))', fontWeight: 500 }} axisLine={false} tickLine={false} />
+        <Tooltip content={<LinkTooltip />} cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3, radius: 4 }} />
         <Legend
           iconType="circle"
-          iconSize={8}
-          formatter={(value: string) => <span className="text-xs text-muted-foreground">{value === 'new' ? 'New Links' : 'Lost Links'}</span>}
+          iconSize={7}
+          formatter={(value: string) => <span className="text-[11px] text-muted-foreground">{value === 'new' ? 'Acquired' : 'Lost'}</span>}
         />
-        <Bar dataKey="new" fill={CHART_COLORS.emerald} radius={[3, 3, 0, 0]} barSize={14} name="new" />
-        <Bar dataKey="lost" fill={CHART_COLORS.rose} radius={[3, 3, 0, 0]} barSize={14} name="lost" />
+        <Bar dataKey="new" fill={CHART_COLORS.emerald} radius={[4, 4, 0, 0]} barSize={12} name="new" fillOpacity={0.85} />
+        <Bar dataKey="lost" fill={CHART_COLORS.rose} radius={[4, 4, 0, 0]} barSize={12} name="lost" fillOpacity={0.85} />
       </BarChart>
     </ResponsiveContainer>
   )
@@ -805,9 +832,9 @@ function QuickActions({ data }: { data: DashboardData }) {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-semibold">Quick Actions</p>
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/20">
-                    <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
-                    Live Web Crawler Active
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Crawler Active
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">Common tasks and shortcuts</p>
@@ -874,7 +901,7 @@ function GradeBreakdown({ data }: { data: DashboardData }) {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-500 animate-pulse" />
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
               <div>
                 <CardTitle className="text-base font-semibold">SEO Grade Breakdown</CardTitle>
                 <CardDescription>Performance across key SEO categories</CardDescription>
