@@ -26,6 +26,7 @@ import {
   Trash2,
   Check,
   ChevronDown,
+  PanelLeft,
 } from "lucide-react"
 
 import { useSeoStore, type ModuleKey } from "@/lib/seo-store"
@@ -261,21 +262,24 @@ function ModuleContent({ moduleKey }: { moduleKey: ModuleKey }) {
   )
 }
 
-// ─── Sidebar Logo ───────────────────────────────────────────────────
+// ─── Sidebar Logo ─────────────────────────────────────────────────────
 function SidebarLogo() {
   return (
-    <div className="flex items-center gap-2 px-2 py-1">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <Activity className="h-4.5 w-4.5" />
+    <div className="flex items-center justify-between px-2 py-1">
+      <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
+          <Activity className="h-4.5 w-4.5" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-sm font-bold tracking-tight text-sidebar-foreground">
+            RankPulse
+          </span>
+          <span className="text-[10px] text-sidebar-foreground/50 font-medium uppercase tracking-widest">
+            SEO Tracker
+          </span>
+        </div>
       </div>
-      <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-        <span className="text-sm font-bold tracking-tight text-sidebar-foreground">
-          RankPulse
-        </span>
-        <span className="text-[10px] text-sidebar-foreground/50 font-medium uppercase tracking-widest">
-          SEO Tracker
-        </span>
-      </div>
+      <SidebarTrigger className="h-7 w-7 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent" />
     </div>
   )
 }
@@ -344,10 +348,9 @@ function AppHeader() {
   return (
     <>
       <header className="flex h-14 items-center gap-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
-        {/* Sidebar trigger + breadcrumb area */}
+        {/* Breadcrumb area */}
         <div className="flex items-center gap-2 min-w-0">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="h-5 mx-1" />
+          <SidebarTrigger className="-ml-1 group-data-[collapsible=icon]:hidden md:hidden" />
           <h1 className="text-sm font-semibold truncate">{currentModule.title}</h1>
         </div>
 
