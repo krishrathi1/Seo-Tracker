@@ -263,6 +263,75 @@ function MiniDistributionBar({ distribution }: { distribution: DashboardData['ke
 }
 
 // ─── Loading Skeleton ─────────────────────────────────────────────────
+function DonutTooltip({ active, payload }: any) {
+  if (active && payload && payload.length) {
+    const d = payload[0]
+    const pct = d.payload.percent ?? 0
+    return (
+      <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 bg-white/90 dark:bg-zinc-950/90 px-3 py-2 shadow-lg backdrop-blur-md">
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.payload.color }} />
+          <span className="text-xs font-semibold">{d.name}</span>
+        </div>
+        <p className="mt-0.5 text-sm font-bold tabular-nums">{d.value} <span className="text-xs font-normal text-muted-foreground">keywords ({pct}%)</span></p>
+      </div>
+    )
+  }
+  return null
+}
+
+function RankTrendTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 p-3 shadow-xl backdrop-blur-md">
+        <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+          <span className="text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+            #{payload[0].value.toFixed(1)}
+          </span>
+          <span className="text-xs font-medium text-muted-foreground">Avg Rank</span>
+        </div>
+      </div>
+    )
+  }
+  return null
+}
+
+function AuditTooltip({ active, payload }: any) {
+  if (active && payload && payload.length) {
+    const d = payload[0]
+    return (
+      <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 bg-white/90 dark:bg-zinc-950/90 px-3 py-2 shadow-lg backdrop-blur-md">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: d.payload.color }} />
+          <span className="text-xs font-semibold">{d.payload.name}</span>
+        </div>
+        <p className="mt-0.5 text-sm font-bold tabular-nums">{d.value} <span className="text-xs font-normal text-muted-foreground">issues</span></p>
+      </div>
+    )
+  }
+  return null
+}
+
+function LinkTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 bg-white/90 dark:bg-zinc-950/90 px-3 py-2 shadow-lg backdrop-blur-md">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{label}</p>
+        {payload.map((p: any) => (
+          <div key={p.dataKey} className="flex items-center gap-2 text-xs">
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: p.fill }} />
+            <span className="text-muted-foreground">{p.dataKey === 'new' ? 'Acquired' : 'Lost'}:</span>
+            <span className="font-bold tabular-nums">{p.value}</span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  return null
+}
+
 function DashboardSkeleton() {
   return (
     <div className="p-6 space-y-6">
@@ -434,7 +503,7 @@ function MetricCards({ data }: { data: DashboardData }) {
 
 // ─── Keyword Distribution Donut ───────────────────────────────────────
 function KeywordDistributionChart({ distribution }: { distribution: DashboardData['keywords']['distribution'] }) {
-  const data = [
+  const rawData = [
     { name: 'Top 3', value: distribution.top3, color: CHART_COLORS.emerald },
     { name: 'Top 10', value: distribution.top10, color: CHART_COLORS.teal },
     { name: 'Top 20', value: distribution.top20, color: CHART_COLORS.cyan },
@@ -442,24 +511,11 @@ function KeywordDistributionChart({ distribution }: { distribution: DashboardDat
     { name: '50+', value: distribution.rank50Plus, color: CHART_COLORS.rose },
   ].filter(d => d.value > 0)
 
-  const total = data.reduce((acc, curr) => acc + curr.value, 0)
-
-  const DonutTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const d = payload[0]
-      const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : '0'
-      return (
-        <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 bg-white/90 dark:bg-zinc-950/90 px-3 py-2 shadow-lg backdrop-blur-md">
-          <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.payload.color }} />
-            <span className="text-xs font-semibold">{d.name}</span>
-          </div>
-          <p className="mt-0.5 text-sm font-bold tabular-nums">{d.value} <span className="text-xs font-normal text-muted-foreground">keywords ({pct}%)</span></p>
-        </div>
-      )
-    }
-    return null
-  }
+  const total = rawData.reduce((acc, curr) => acc + curr.value, 0)
+  const data = rawData.map((d) => ({
+    ...d,
+    percent: total > 0 ? ((d.value / total) * 100).toFixed(1) : '0',
+  }))
 
   return (
     <div className="relative flex items-center justify-center">
@@ -508,24 +564,6 @@ function MonthlyRankTrend({ trend }: { trend: DashboardData['monthlyTrend'] }) {
       rank: t.averageRank,
     }))
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 p-3 shadow-xl backdrop-blur-md">
-          <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-            <span className="text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
-              #{payload[0].value.toFixed(1)}
-            </span>
-            <span className="text-xs font-medium text-muted-foreground">Avg Rank</span>
-          </div>
-        </div>
-      )
-    }
-    return null
-  }
-
   return (
     <ResponsiveContainer width="100%" height={280}>
       <LineChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
@@ -551,7 +589,7 @@ function MonthlyRankTrend({ trend }: { trend: DashboardData['monthlyTrend'] }) {
           tickLine={false}
           dx={-10}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.2 }} />
+        <Tooltip content={<RankTrendTooltip />} cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.2 }} />
         <Line
           type="monotone"
           dataKey="rank"
@@ -615,22 +653,6 @@ function AuditIssuesChart({ issues }: { issues: DashboardData['audit']['issueBre
     { name: 'Info', value: issues.info, color: SEVERITY_COLORS.info },
   ]
 
-  const AuditTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const d = payload[0]
-      return (
-        <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 bg-white/90 dark:bg-zinc-950/90 px-3 py-2 shadow-lg backdrop-blur-md">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: d.payload.color }} />
-            <span className="text-xs font-semibold">{d.payload.name}</span>
-          </div>
-          <p className="mt-0.5 text-sm font-bold tabular-nums">{d.value} <span className="text-xs font-normal text-muted-foreground">issues</span></p>
-        </div>
-      )
-    }
-    return null
-  }
-
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
@@ -669,24 +691,6 @@ function BacklinkProfileChart({ newCount, lostCount }: { newCount: number; lostC
 
   data[data.length - 1].new = newCount - data.slice(0, -1).reduce((s, d) => s + d.new, 0)
   data[data.length - 1].lost = lostCount - data.slice(0, -1).reduce((s, d) => s + d.lost, 0)
-
-  const LinkTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800/60 bg-white/90 dark:bg-zinc-950/90 px-3 py-2 shadow-lg backdrop-blur-md">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">{label}</p>
-          {payload.map((p: any) => (
-            <div key={p.dataKey} className="flex items-center gap-2 text-xs">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: p.fill }} />
-              <span className="text-muted-foreground">{p.dataKey === 'new' ? 'Acquired' : 'Lost'}:</span>
-              <span className="font-bold tabular-nums">{p.value}</span>
-            </div>
-          ))}
-        </div>
-      )
-    }
-    return null
-  }
 
   return (
     <ResponsiveContainer width="100%" height={260}>

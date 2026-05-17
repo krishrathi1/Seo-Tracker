@@ -392,7 +392,7 @@ function ActionTimelineItem({
               </span>
               <span>·</span>
               <span className="flex items-center gap-1">
-                <CatIcon className="h-3 w-3" style={{ color: catColor }} />
+                {React.createElement(CatIcon, { className: 'h-3 w-3', style: { color: catColor } })}
                 {item.category}
               </span>
             </div>

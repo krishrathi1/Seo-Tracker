@@ -26,6 +26,18 @@ export async function GET(request: NextRequest) {
 }
 
 async function dashboardResponse(projectId: string) {
+  const now = new Date()
+  const monthWindows = Array.from({ length: 12 }, (_, index) => {
+    const monthOffset = 11 - index
+    const start = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1)
+    const end = new Date(now.getFullYear(), now.getMonth() - monthOffset + 1, 0, 23, 59, 59, 999)
+    return {
+      start,
+      end,
+      label: start.toLocaleString('en-US', { month: 'short', year: '2-digit' }),
+    }
+  })
+
   // Fetch all data in parallel
   const [
     project,
@@ -36,11 +48,11 @@ async function dashboardResponse(projectId: string) {
     competitors,
     alerts,
     recentAlerts,
+    rankHistory,
   ] = await Promise.all([
     db.project.findUnique({ where: { id: projectId } }),
     db.keyword.findMany({
       where: { projectId, isActive: true },
-      include: { rankHistory: { orderBy: { date: 'desc' }, take: 1 } },
     }),
     db.siteAudit.findFirst({
       where: { projectId, status: 'completed' },
@@ -59,6 +71,13 @@ async function dashboardResponse(projectId: string) {
       where: { projectId, isRead: false },
       orderBy: { createdAt: 'desc' },
       take: 10,
+    }),
+    db.keywordRank.findMany({
+      where: {
+        keyword: { projectId, isActive: true },
+        date: { gte: monthWindows[0].start, lte: monthWindows[monthWindows.length - 1].end },
+      },
+      select: { rank: true, date: true },
     }),
   ])
 
@@ -93,14 +112,13 @@ async function dashboardResponse(projectId: string) {
   const lost = keywords.filter(k => !k.currentRank && k.previousRank).length
 
   // === Backlink Stats ===
-  const now = new Date()
   const oneMonthAgo = new Date(now)
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
 
   const activeBacklinks = backlinks.filter(b => b.status === 'active')
   const newThisMonth = backlinks.filter(b => b.firstSeen >= oneMonthAgo && b.status === 'active').length
   const lostThisMonth = backlinks.filter(b => b.status === 'lost' && b.lastSeen >= oneMonthAgo).length
-  const referringDomains = new Set(backlinks.map(b => b.sourceDomain)).size
+  const referringDomains = new Set(activeBacklinks.map(b => b.sourceDomain)).size
   const followLinks = activeBacklinks.filter(b => b.isFollow).length
   const nofollowLinks = activeBacklinks.filter(b => !b.isFollow).length
 
@@ -147,34 +165,23 @@ async function dashboardResponse(projectId: string) {
   // Add our own metrics for comparison
   const ourMetrics = {
     domain: project.domain,
-    authorityScore: 64,
+    authorityScore: Math.min(100, Math.round((healthScore * 0.45) + (Math.min(referringDomains, 300) / 300 * 35) + (Math.min(keywords.length, 1000) / 1000 * 20))),
     organicKeywords: keywords.length,
     organicTraffic: estimatedTraffic,
     backlinks: activeBacklinks.length,
   }
 
   // === Monthly Rank Trend (last 12 months) ===
-  const monthlyTrend = []
-  for (let monthOffset = 11; monthOffset >= 0; monthOffset--) {
-    const monthDate = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1)
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() - monthOffset + 1, 0)
-    const monthLabel = monthDate.toLocaleString('en-US', { month: 'short', year: '2-digit' })
-
-    // Get average rank for this month from rank history
-    const monthRanks = await db.keywordRank.findMany({
-      where: {
-        keyword: { projectId, isActive: true },
-        date: { gte: monthDate, lte: monthEnd },
-      },
-      select: { rank: true },
-    })
+  const monthlyTrend: { month: string; averageRank: number | null; totalKeywords: number }[] = []
+  for (const window of monthWindows) {
+    const monthRanks = rankHistory.filter((rank) => rank.date >= window.start && rank.date <= window.end)
 
     const avgRank = monthRanks.length > 0
       ? Math.round(monthRanks.reduce((sum, r) => sum + r.rank, 0) / monthRanks.length * 10) / 10
       : null
 
     monthlyTrend.push({
-      month: monthLabel,
+      month: window.label,
       averageRank: avgRank,
       totalKeywords: keywords.length,
     })
@@ -194,7 +201,7 @@ async function dashboardResponse(projectId: string) {
     }))
     .sort((a, b) => b.change - a.change)
 
-  const topImproved = keywordsWithChanges.slice(0, 5)
+  const topImproved = keywordsWithChanges.filter(k => k.change > 0).slice(0, 5)
   const topDeclined = keywordsWithChanges
     .filter(k => k.change < 0)
     .sort((a, b) => a.change - b.change)

@@ -932,15 +932,19 @@ export function ContentOptimizerModule() {
   // Real-time analysis as user types
   React.useEffect(() => {
     if (!hasAnalyzed) return
-    if (content.trim().length === 0 && targetKeyword.trim().length === 0) {
-      setAnalysis(null)
-      return
-    }
-    const result = analyzeContent(content, targetKeyword)
-    setAnalysis(result)
-    if (!serpTitle && result.metaTitle) setSerpTitle(result.metaTitle)
-    if (!serpDescription && result.metaDescription) setSerpDescription(result.metaDescription)
-  }, [content, targetKeyword, hasAnalyzed])
+    const timer = window.setTimeout(() => {
+      if (content.trim().length === 0 && targetKeyword.trim().length === 0) {
+        setAnalysis(null)
+        return
+      }
+      const result = analyzeContent(content, targetKeyword)
+      setAnalysis(result)
+      if (!serpTitle && result.metaTitle) setSerpTitle(result.metaTitle)
+      if (!serpDescription && result.metaDescription) setSerpDescription(result.metaDescription)
+    }, 180)
+
+    return () => window.clearTimeout(timer)
+  }, [content, targetKeyword, hasAnalyzed, serpTitle, serpDescription])
 
   const handleAnalyze = () => {
     if (!content.trim()) return
