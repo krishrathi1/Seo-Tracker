@@ -12,10 +12,27 @@ export async function GET() {
         isActive: true,
         createdAt: true,
         updatedAt: true,
+        audits: {
+          where: { status: 'completed' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { score: true },
+        },
       },
     })
 
-    return NextResponse.json({ projects })
+    // Flatten audit score into each project
+    const enriched = projects.map((p) => ({
+      id: p.id,
+      name: p.name,
+      domain: p.domain,
+      isActive: p.isActive,
+      seoScore: p.audits.length > 0 ? p.audits[0].score : null,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    }))
+
+    return NextResponse.json({ projects: enriched })
   } catch (error) {
     console.error('Projects GET error:', error)
     return NextResponse.json(

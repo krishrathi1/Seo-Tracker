@@ -66,3 +66,9 @@ server.log
 
 # Worklog
 worklog.md
+
+# Obsidian
+.obsidian/
+
+# pnpm
+pnpm-lock.yaml

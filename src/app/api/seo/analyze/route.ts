@@ -421,18 +421,20 @@ Provide a comprehensive SEO analysis.`,
     // ── Step 4: Save all data to database ─────────────────────
     setProgress(url, 'saving_results', 75, 'Saving analysis results...')
 
-    // Check if project already exists for this domain
-    let project = await db.project.findFirst({ where: { domain } })
-
-    if (!project) {
-      project = await db.project.create({
-        data: {
-          name: seoAnalysis?.siteOverview?.title || domain,
-          domain,
-          isActive: true,
-        },
-      })
+    // Check if project already exists for this domain - delete it to avoid duplicates
+    const existingProject = await db.project.findFirst({ where: { domain } })
+    if (existingProject) {
+      // Cascade delete will remove all related data (keywords, audits, backlinks, competitors, alerts)
+      await db.project.delete({ where: { id: existingProject.id } })
     }
+
+    const project = await db.project.create({
+      data: {
+        name: seoAnalysis?.siteOverview?.title || domain,
+        domain,
+        isActive: true,
+      },
+    })
 
     // Save keywords from LLM analysis
     const keywordsCreated = []

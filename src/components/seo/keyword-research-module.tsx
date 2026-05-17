@@ -74,6 +74,8 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import { useSeoStore } from '@/lib/seo-store'
+import { Globe } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────
 interface KeywordSuggestion {
@@ -271,6 +273,7 @@ function SearchBar({
   recentSearches,
   onRecentClick,
   onRemoveRecent,
+  projectDomain,
 }: {
   seed: string
   onSeedChange: (v: string) => void
@@ -279,6 +282,7 @@ function SearchBar({
   recentSearches: string[]
   onRecentClick: (s: string) => void
   onRemoveRecent: (s: string) => void
+  projectDomain?: string | null
 }) {
   return (
     <div className="space-y-3">
@@ -310,6 +314,17 @@ function SearchBar({
             </>
           )}
         </Button>
+        {projectDomain && (
+          <Button
+            variant="outline"
+            onClick={() => { onSeedChange(projectDomain); setTimeout(onSearch, 50) }}
+            disabled={isSearching}
+            className="h-11 px-4 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 gap-1.5"
+          >
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline">Your Site</span>
+          </Button>
+        )}
       </div>
       {recentSearches.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
@@ -989,6 +1004,21 @@ export function KeywordResearchModule() {
   const [intentFilter, setIntentFilter] = React.useState('all')
   const [minVolume, setMinVolume] = React.useState(0)
 
+  const activeProjectId = useSeoStore((s) => s.activeProjectId)
+  const [projectDomain, setProjectDomain] = React.useState<string | null>(null)
+
+  // Fetch project domain from API
+  React.useEffect(() => {
+    if (!activeProjectId) return
+    fetch('/api/seo/projects')
+      .then(res => res.ok ? res.json() : { projects: [] })
+      .then(data => {
+        const project = data.projects?.find((p: { id: string; domain: string }) => p.id === activeProjectId)
+        if (project) setProjectDomain(project.domain)
+      })
+      .catch(() => {})
+  }, [activeProjectId])
+
   const { data, isLoading, isFetching } = useKeywordResearch(activeSeed)
 
   const handleSearch = React.useCallback(() => {
@@ -1107,6 +1137,7 @@ export function KeywordResearchModule() {
             recentSearches={recentSearches}
             onRecentClick={handleRecentClick}
             onRemoveRecent={handleRemoveRecent}
+            projectDomain={projectDomain}
           />
         </motion.div>
         <EmptyState onSearch={(s) => { setSeed(s); setActiveSeed(s) }} />
@@ -1127,6 +1158,7 @@ export function KeywordResearchModule() {
             recentSearches={recentSearches}
             onRecentClick={handleRecentClick}
             onRemoveRecent={handleRemoveRecent}
+            projectDomain={projectDomain}
           />
           <ResearchLoadingSkeleton />
         </div>
@@ -1147,6 +1179,7 @@ export function KeywordResearchModule() {
             recentSearches={recentSearches}
             onRecentClick={handleRecentClick}
             onRemoveRecent={handleRemoveRecent}
+            projectDomain={projectDomain}
           />
           <Card>
             <CardContent className="pt-0 text-center py-12">
@@ -1188,6 +1221,7 @@ export function KeywordResearchModule() {
                 recentSearches={recentSearches}
                 onRecentClick={handleRecentClick}
                 onRemoveRecent={handleRemoveRecent}
+                projectDomain={projectDomain}
               />
             </div>
             <KeywordListBuilder

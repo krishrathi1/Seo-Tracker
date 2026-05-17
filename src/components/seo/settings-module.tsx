@@ -2,72 +2,34 @@
 
 import * as React from 'react'
 import { motion } from 'framer-motion'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTheme } from 'next-themes'
 import {
   User,
-  Mail,
-  Lock,
-  CreditCard,
-  Bell,
-  Plug,
-  Key,
-  Users,
-  Shield,
   Globe,
-  Target,
-  Link2,
-  TrendingUp,
-  AlertTriangle,
-  Copy,
-  Check,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  Plus,
   Trash2,
-  Pause,
-  Edit3,
-  ChevronRight,
-  ExternalLink,
-  Zap,
-  BarChart3,
-  Search,
   Palette,
-  Star,
-  Bug,
-  Lightbulb,
-  HeartHandshake,
-  Coffee,
-  MessageSquare,
-  GitBranch,
+  Sun,
+  Moon,
+  Monitor,
+  Download,
+  Database,
+  AlertTriangle,
   Award,
+  Shield,
+  Info,
+  Check,
+  Loader2,
+  FileDown,
+  FolderOpen,
 } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
-import { Progress } from '@/components/ui/progress'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 import {
   Table,
   TableBody,
@@ -76,57 +38,42 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useSeoStore } from '@/lib/seo-store'
 import { cn } from '@/lib/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────
-interface Project {
+interface ProjectItem {
   id: string
   name: string
   domain: string
-  status: 'active' | 'paused'
-  keywordsCount: number
-  lastAudit: string
+  isActive: boolean
+  seoScore: number | null
+  createdAt: string
+  updatedAt: string
 }
 
-interface TeamMember {
-  id: string
-  name: string
-  email: string
-  role: 'admin' | 'editor' | 'viewer'
-  avatar?: string
-  initials: string
+interface ProjectsResponse {
+  projects: ProjectItem[]
 }
-
-interface Integration {
-  id: string
-  name: string
-  description: string
-  icon: React.ElementType
-  connected: boolean
-  connectLabel: string
-}
-
-// ─── Constants ────────────────────────────────────────────────────────
-const PROJECTS: Project[] = [
-  { id: 'p1', name: 'TechVenture Inc.', domain: 'techventure.io', status: 'active', keywordsCount: 53, lastAudit: '2026-03-15' },
-  { id: 'p2', name: 'GrowthLab.io', domain: 'growthlab.io', status: 'active', keywordsCount: 28, lastAudit: '2026-03-10' },
-  { id: 'p3', name: 'DataFlow Systems', domain: 'dataflowsystems.com', status: 'paused', keywordsCount: 15, lastAudit: '2026-02-20' },
-]
-
-const TEAM_MEMBERS: TeamMember[] = [
-  { id: 't1', name: 'John Doe', email: 'john@techventure.io', role: 'admin', initials: 'JD' },
-  { id: 't2', name: 'Sarah Miller', email: 'sarah@techventure.io', role: 'editor', initials: 'SM' },
-  { id: 't3', name: 'Alex Chen', email: 'alex@techventure.io', role: 'viewer', initials: 'AC' },
-  { id: 't4', name: 'Maria Garcia', email: 'maria@techventure.io', role: 'editor', initials: 'MG' },
-]
-
-const INTEGRATIONS: Integration[] = [
-  { id: 'gsc', name: 'Google Search Console', description: 'Connect your GSC account for search analytics data', icon: Search, connected: true, connectLabel: 'Connect' },
-  { id: 'ga4', name: 'Google Analytics 4', description: 'Import traffic and user behavior data from GA4', icon: BarChart3, connected: false, connectLabel: 'Connect' },
-  { id: 'slack', name: 'Slack', description: 'Send alerts and reports to your Slack channels', icon: Zap, connected: false, connectLabel: 'Configure' },
-  { id: 'zapier', name: 'Zapier', description: 'Automate workflows with 5000+ app integrations', icon: Plug, connected: false, connectLabel: 'Enable' },
-]
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -137,19 +84,569 @@ const fadeUp = {
   }),
 }
 
-const ROLE_COLORS: Record<string, string> = {
-  admin: 'bg-emerald-500/15 text-emerald-600',
-  editor: 'bg-amber-500/15 text-amber-600',
-  viewer: 'bg-slate-500/15 text-slate-600',
+function getScoreColor(score: number | null): string {
+  if (score === null) return 'text-muted-foreground'
+  if (score >= 80) return 'text-emerald-600'
+  if (score >= 60) return 'text-amber-600'
+  if (score >= 40) return 'text-orange-600'
+  return 'text-rose-600'
 }
 
-// ─── Account Settings ─────────────────────────────────────────────────
-function AccountSettings() {
-  const [showPassword, setShowPassword] = React.useState(false)
-  const [currentPassword, setCurrentPassword] = React.useState('')
-  const [newPassword, setNewPassword] = React.useState('')
-  const [confirmPassword, setConfirmPassword] = React.useState('')
+function getScoreBg(score: number | null): string {
+  if (score === null) return 'bg-muted'
+  if (score >= 80) return 'bg-emerald-500/10'
+  if (score >= 60) return 'bg-amber-500/10'
+  if (score >= 40) return 'bg-orange-500/10'
+  return 'bg-rose-500/10'
+}
 
+// ─── Project Management Section ───────────────────────────────────────
+function ProjectManagement() {
+  const queryClient = useQueryClient()
+  const { activeProjectId, resetForNewAnalysis } = useSeoStore()
+  const [deletingId, setDeletingId] = React.useState<string | null>(null)
+
+  // Fetch projects
+  const { data, isLoading, error } = useQuery<ProjectsResponse>({
+    queryKey: ['seo-projects'],
+    queryFn: async () => {
+      const res = await fetch('/api/seo/projects')
+      if (!res.ok) throw new Error('Failed to fetch projects')
+      return res.json()
+    },
+  })
+
+  // Delete single project mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      const res = await fetch(`/api/seo/projects?id=${projectId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || 'Failed to delete project')
+      }
+      return res.json()
+    },
+    onSuccess: (_data, deletedId) => {
+      queryClient.invalidateQueries({ queryKey: ['seo-projects'] })
+      // If the deleted project was the active one, reset
+      if (activeProjectId === deletedId) {
+        resetForNewAnalysis()
+      }
+      setDeletingId(null)
+    },
+    onError: () => {
+      setDeletingId(null)
+    },
+  })
+
+  // Clear all projects mutation
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      if (!data?.projects.length) return
+      // Delete all projects one by one (cascade deletes everything)
+      const results = await Promise.allSettled(
+        data.projects.map((p) =>
+          fetch(`/api/seo/projects?id=${p.id}`, { method: 'DELETE' })
+            .then((res) => {
+              if (!res.ok) throw new Error(`Failed to delete ${p.name}`)
+              return res.json()
+            })
+        )
+      )
+      const failed = results.filter((r) => r.status === 'rejected')
+      if (failed.length > 0) {
+        throw new Error(`${failed.length} project(s) could not be deleted`)
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seo-projects'] })
+      resetForNewAnalysis()
+    },
+  })
+
+  const projects = data?.projects ?? []
+
+  return (
+    <div className="space-y-6">
+      {/* Project List */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Globe className="h-4 w-4 text-emerald-500" />
+                Project Management
+              </CardTitle>
+              <CardDescription>
+                {isLoading
+                  ? 'Loading projects...'
+                  : `${projects.length} project${projects.length !== 1 ? 's' : ''} tracked`}
+              </CardDescription>
+            </div>
+            {activeProjectId && (
+              <Badge className="bg-emerald-500/15 text-emerald-600 border-0 text-[10px] px-2 py-0.5">
+                Active: {activeProjectId}
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-emerald-500" />
+              <span className="ml-2 text-sm text-muted-foreground">Loading projects...</span>
+            </div>
+          ) : error ? (
+            <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 text-center">
+              <AlertTriangle className="h-5 w-5 text-rose-500 mx-auto mb-2" />
+              <p className="text-sm text-rose-600">Failed to load projects</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {error instanceof Error ? error.message : 'Unknown error'}
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-3 h-8 text-xs"
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['seo-projects'] })}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-8 text-center">
+              <FolderOpen className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm font-medium">No projects yet</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Analyze a website to create your first project
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Project</TableHead>
+                    <TableHead className="text-xs">Domain</TableHead>
+                    <TableHead className="text-xs">SEO Score</TableHead>
+                    <TableHead className="text-xs">Status</TableHead>
+                    <TableHead className="text-xs">Created</TableHead>
+                    <TableHead className="text-xs text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projects.map((project) => (
+                    <TableRow key={project.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            'flex h-8 w-8 items-center justify-center rounded-lg',
+                            getScoreBg(project.seoScore)
+                          )}>
+                            <Globe className={cn('h-4 w-4', getScoreColor(project.seoScore))} />
+                          </div>
+                          <span className="text-xs font-medium">{project.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {project.domain}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {project.seoScore !== null ? (
+                          <div className="flex items-center gap-2">
+                            <span className={cn('text-sm font-bold tabular-nums', getScoreColor(project.seoScore))}>
+                              {project.seoScore}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">/100</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={cn(
+                            'text-[10px] px-1.5 py-0 border-0 font-medium',
+                            project.isActive
+                              ? 'bg-emerald-500/15 text-emerald-600'
+                              : 'bg-amber-500/15 text-amber-600'
+                          )}
+                        >
+                          {project.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(project.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <AlertDialog>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+                                  disabled={deleteMutation.isPending && deletingId === project.id}
+                                >
+                                  {deleteMutation.isPending && deletingId === project.id ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  )}
+                                </Button>
+                              </AlertDialogTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete project</TooltipContent>
+                          </Tooltip>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="flex items-center gap-2">
+                                <AlertTriangle className="h-5 w-5 text-rose-500" />
+                                Delete Project
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete <strong>{project.name}</strong> ({project.domain})?
+                                This will permanently remove all associated keywords, audits, backlinks, competitors, and alerts.
+                                This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel onClick={() => setDeletingId(null)}>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-rose-600 hover:bg-rose-700 text-white"
+                                onClick={() => {
+                                  setDeletingId(project.id)
+                                  deleteMutation.mutate(project.id)
+                                }}
+                              >
+                                Delete Project
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Data Management */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Database className="h-4 w-4 text-emerald-500" />
+            Data Management
+          </CardTitle>
+          <CardDescription>Manage your data — export or clear all project data</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Export All Data */}
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
+                <FileDown className="h-5 w-5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Export All Data</p>
+                <p className="text-xs text-muted-foreground">
+                  Download a full CSV report with keywords, audit issues, backlinks &amp; competitors
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+              disabled={projects.length === 0}
+              onClick={() => {
+                window.open('/api/seo/export?format=csv&module=full', '_blank')
+              }}
+            >
+              <Download className="h-3.5 w-3.5" />
+              Export CSV
+            </Button>
+          </div>
+
+          {/* Clear All Data */}
+          <div className="flex items-center justify-between rounded-lg border border-rose-500/20 bg-rose-500/5 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-500/10">
+                <AlertTriangle className="h-5 w-5 text-rose-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-rose-600">Clear All Data</p>
+                <p className="text-xs text-muted-foreground">
+                  Delete all projects and their associated data. This cannot be undone.
+                </p>
+              </div>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs text-rose-600 border-rose-500/30 hover:bg-rose-500/10 gap-1.5"
+                  disabled={projects.length === 0 || clearAllMutation.isPending}
+                >
+                  {clearAllMutation.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                  Clear All
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-rose-500" />
+                    Clear All Data
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete <strong>all {projects.length} project{projects.length !== 1 ? 's' : ''}</strong> and
+                    all associated data including keywords, audits, backlinks, competitors, and alerts.
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-rose-600 hover:bg-rose-700 text-white"
+                    onClick={() => clearAllMutation.mutate()}
+                  >
+                    Delete Everything
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ─── Appearance Section ────────────────────────────────────────────────
+function AppearanceSettings() {
+  const { theme, setTheme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  // Avoid hydration mismatch
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const themeOptions = [
+    {
+      value: 'light',
+      label: 'Light',
+      description: 'Clean and bright',
+      icon: Sun,
+    },
+    {
+      value: 'dark',
+      label: 'Dark',
+      description: 'Easy on the eyes',
+      icon: Moon,
+    },
+    {
+      value: 'system',
+      label: 'System',
+      description: 'Match your OS',
+      icon: Monitor,
+    },
+  ]
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Palette className="h-4 w-4 text-emerald-500" />
+          Appearance
+        </CardTitle>
+        <CardDescription>Customize how RankPulse looks on your screen</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Theme Selection */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Theme</Label>
+          <div className="grid grid-cols-3 gap-3">
+            {themeOptions.map((option) => {
+              const isSelected = mounted && theme === option.value
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => setTheme(option.value)}
+                  className={cn(
+                    'relative flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all hover:border-emerald-500/50',
+                    isSelected
+                      ? 'border-emerald-500 bg-emerald-500/5'
+                      : 'border-muted'
+                  )}
+                >
+                  {isSelected && (
+                    <div className="absolute top-2 right-2">
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    </div>
+                  )}
+                  <div className={cn(
+                    'flex h-10 w-10 items-center justify-center rounded-lg',
+                    isSelected ? 'bg-emerald-500/10' : 'bg-muted'
+                  )}>
+                    <option.icon className={cn(
+                      'h-5 w-5',
+                      isSelected ? 'text-emerald-500' : 'text-muted-foreground'
+                    )} />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-medium">{option.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{option.description}</p>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Current Theme Info */}
+        <div className="rounded-lg border bg-muted/30 p-3">
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="text-xs text-muted-foreground">
+                {mounted ? (
+                  <>
+                    Active theme: <span className="font-medium text-foreground">{resolvedTheme}</span>
+                    {theme === 'system' && (
+                      <span className="text-muted-foreground"> (following your system preference)</span>
+                    )}
+                  </>
+                ) : (
+                  'Loading theme...'
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ─── About Section ─────────────────────────────────────────────────────
+function AboutSection() {
+  const features = [
+    'Unlimited projects & keywords',
+    '13 SEO analysis modules',
+    'AI-powered insights',
+    'CSV & PDF report export',
+    'No sign-up required',
+    'No tracking, no paywalls',
+  ]
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Info className="h-4 w-4 text-emerald-500" />
+          About RankPulse
+        </CardTitle>
+        <CardDescription>Application information and license details</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* App Identity */}
+        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
+                <Shield className="h-5 w-5 text-emerald-500" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-bold">RankPulse</span>
+                  <Badge className="bg-emerald-500/15 text-emerald-600 border-0 text-[10px] px-1.5 py-0">
+                    v1.0
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">Open Source SEO Analytics Platform</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-xs">
+            <Badge className="bg-emerald-600 text-white border-0 text-[10px] px-2 py-0.5">
+              MIT License
+            </Badge>
+            <Badge className="bg-emerald-500/15 text-emerald-600 border-0 text-[10px] px-1.5 py-0">
+              Open Source
+            </Badge>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold">Features</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            {features.map((feature, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <span>{feature}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* License & Credits */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold">License</h4>
+          <div className="rounded-lg border p-3 text-xs text-muted-foreground space-y-1.5">
+            <p>
+              RankPulse is free and open source software released under the{' '}
+              <span className="font-medium text-foreground">MIT License</span>.
+            </p>
+            <p>
+              You are free to use, modify, and distribute this software for any purpose,
+              including commercial applications, without restriction.
+            </p>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Community CTA */}
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Award className="h-4 w-4 text-emerald-500" />
+              <span className="text-sm font-semibold">Community Edition</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Free forever &middot; No limits &middot; Open source
+            </p>
+          </div>
+          <Badge className="bg-emerald-500/15 text-emerald-600 border-0 text-[10px] px-2 py-0.5">
+            Free Forever
+          </Badge>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ─── Account Settings (kept from original) ────────────────────────────
+function AccountSettings() {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -160,89 +657,20 @@ function AccountSettings() {
         <CardDescription>Manage your profile and security settings</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Profile */}
-        <div className="flex items-start gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src="" alt="User" />
-            <AvatarFallback className="bg-emerald-500/10 text-emerald-600 text-lg font-semibold">
-              JD
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Full Name</Label>
-                <Input defaultValue="John Doe" className="h-9 text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Email</Label>
-                <Input defaultValue="john@techventure.io" className="h-9 text-sm" type="email" />
-              </div>
-            </div>
-            <Button size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
-              Save Changes
-            </Button>
+        {/* Profile Summary */}
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10">
+            <User className="h-6 w-6 text-emerald-500" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold">Community User</p>
+            <p className="text-xs text-muted-foreground">No sign-up required — all features unlocked</p>
           </div>
         </div>
 
         <Separator />
 
-        {/* Password Change */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <Lock className="h-4 w-4 text-muted-foreground" />
-            Change Password
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Current Password</Label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="h-9 text-sm pr-9"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-9 w-9"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">New Password</Label>
-              <Input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••"
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Confirm Password</Label>
-              <Input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                className="h-9 text-sm"
-              />
-            </div>
-          </div>
-          <Button size="sm" variant="outline" className="h-8 text-xs">
-            Update Password
-          </Button>
-        </div>
-
-        <Separator />
-
-        {/* Open Source Community */}
+        {/* Community Edition Badge */}
         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -253,729 +681,11 @@ function AccountSettings() {
                   Free Forever
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">MIT License &middot; No limits, no paywalls, no tracking</p>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ─── Project Management ───────────────────────────────────────────────
-function ProjectManagement() {
-  const [addDialogOpen, setAddDialogOpen] = React.useState(false)
-  const [newProject, setNewProject] = React.useState({ name: '', domain: '', industry: '', country: '' })
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Globe className="h-4 w-4 text-emerald-500" />
-              Project Management
-            </CardTitle>
-            <CardDescription>Manage your tracked projects and websites</CardDescription>
-          </div>
-          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white">
-                <Plus className="h-3.5 w-3.5 mr-1" />
-                Add Project
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Project</DialogTitle>
-                <DialogDescription>Add a new website to track and monitor</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-2">
-                <div className="space-y-1.5">
-                  <Label className="text-sm">Project Name</Label>
-                  <Input
-                    placeholder="e.g., My Website"
-                    value={newProject.name}
-                    onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm">Domain</Label>
-                  <Input
-                    placeholder="e.g., example.com"
-                    value={newProject.domain}
-                    onChange={(e) => setNewProject({ ...newProject, domain: e.target.value })}
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-sm">Industry</Label>
-                    <Select value={newProject.industry} onValueChange={(v) => setNewProject({ ...newProject, industry: v })}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Select..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="tech">Technology</SelectItem>
-                        <SelectItem value="saas">SaaS</SelectItem>
-                        <SelectItem value="ecommerce">E-commerce</SelectItem>
-                        <SelectItem value="finance">Finance</SelectItem>
-                        <SelectItem value="health">Healthcare</SelectItem>
-                        <SelectItem value="education">Education</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-sm">Target Country</Label>
-                    <Select value={newProject.country} onValueChange={(v) => setNewProject({ ...newProject, country: v })}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Select..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="us">United States</SelectItem>
-                        <SelectItem value="uk">United Kingdom</SelectItem>
-                        <SelectItem value="ca">Canada</SelectItem>
-                        <SelectItem value="au">Australia</SelectItem>
-                        <SelectItem value="de">Germany</SelectItem>
-                        <SelectItem value="fr">France</SelectItem>
-                        <SelectItem value="global">Global</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" size="sm" onClick={() => setAddDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setAddDialogOpen(false)}>
-                  Create Project
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Project</TableHead>
-                <TableHead className="text-xs">Status</TableHead>
-                <TableHead className="text-xs">Keywords</TableHead>
-                <TableHead className="text-xs">Last Audit</TableHead>
-                <TableHead className="text-xs text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {PROJECTS.map((project) => (
-                <TableRow key={project.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
-                        <Globe className="h-4 w-4 text-emerald-500" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium">{project.name}</p>
-                        <p className="text-[11px] text-muted-foreground">{project.domain}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      className={cn(
-                        'text-[10px] px-1.5 py-0 border-0 font-medium',
-                        project.status === 'active'
-                          ? 'bg-emerald-500/15 text-emerald-600'
-                          : 'bg-amber-500/15 text-amber-600'
-                      )}
-                    >
-                      {project.status === 'active' ? 'Active' : 'Paused'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs tabular-nums">{project.keywordsCount}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {new Date(project.lastAudit).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" title="Edit">
-                        <Edit3 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" title="Pause">
-                        <Pause className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-rose-500 hover:text-rose-600" title="Delete">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ─── Notification Settings ────────────────────────────────────────────
-function NotificationSettings() {
-  const [alerts, setAlerts] = React.useState({
-    rankingChanges: true,
-    backlinks: true,
-    auditIssues: true,
-    trafficAnomalies: false,
-    competitorChanges: false,
-  })
-
-  const [channels, setChannels] = React.useState({
-    email: true,
-    slack: false,
-    webhook: false,
-  })
-
-  const [slackWebhook, setSlackWebhook] = React.useState('')
-  const [webhookUrl, setWebhookUrl] = React.useState('')
-  const [digestFrequency, setDigestFrequency] = React.useState('daily')
-
-  const toggleAlert = (key: keyof typeof alerts) => {
-    setAlerts((prev) => ({ ...prev, [key]: !prev[key] }))
-  }
-
-  const toggleChannel = (key: keyof typeof channels) => {
-    setChannels((prev) => ({ ...prev, [key]: !prev[key] }))
-  }
-
-  const alertItems = [
-    { key: 'rankingChanges' as const, label: 'Ranking Changes', description: 'When keywords move up or down significantly', icon: TrendingUp },
-    { key: 'backlinks' as const, label: 'New / Lost Backlinks', description: 'When backlinks are gained or lost', icon: Link2 },
-    { key: 'auditIssues' as const, label: 'Audit Issues', description: 'New technical SEO issues detected', icon: Shield },
-    { key: 'trafficAnomalies' as const, label: 'Traffic Anomalies', description: 'Unusual traffic patterns or drops', icon: AlertTriangle },
-    { key: 'competitorChanges' as const, label: 'Competitor Changes', description: 'Significant competitor movement', icon: Users },
-  ]
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Bell className="h-4 w-4 text-emerald-500" />
-          Notification Settings
-        </CardTitle>
-        <CardDescription>Configure how and when you receive alerts</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Alert Types */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold">Alert Types</h4>
-          {alertItems.map((item) => (
-            <div
-              key={item.key}
-              className="flex items-center justify-between rounded-lg border p-3 hover:border-emerald-500/30 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-lg',
-                  alerts[item.key] ? 'bg-emerald-500/10' : 'bg-muted'
-                )}>
-                  <item.icon className={cn('h-4 w-4', alerts[item.key] ? 'text-emerald-500' : 'text-muted-foreground')} />
-                </div>
-                <div>
-                  <p className="text-xs font-medium">{item.label}</p>
-                  <p className="text-[11px] text-muted-foreground">{item.description}</p>
-                </div>
-              </div>
-              <Switch
-                checked={alerts[item.key]}
-                onCheckedChange={() => toggleAlert(item.key)}
-              />
-            </div>
-          ))}
-        </div>
-
-        <Separator />
-
-        {/* Notification Channels */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold">Notification Channels</h4>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-xs font-medium">Email</p>
-                  <p className="text-[11px] text-muted-foreground">john@techventure.io</p>
-                </div>
-              </div>
-              <Switch checked={channels.email} onCheckedChange={() => toggleChannel('email')} />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="flex items-center gap-3">
-                  <Zap className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs font-medium">Slack</p>
-                    <p className="text-[11px] text-muted-foreground">Send alerts to a Slack channel</p>
-                  </div>
-                </div>
-                <Switch checked={channels.slack} onCheckedChange={() => toggleChannel('slack')} />
-              </div>
-              {channels.slack && (
-                <div className="pl-11">
-                  <Input
-                    placeholder="https://hooks.slack.com/services/..."
-                    value={slackWebhook}
-                    onChange={(e) => setSlackWebhook(e.target.value)}
-                    className="h-9 text-xs"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="flex items-center gap-3">
-                  <Plug className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs font-medium">Custom Webhook</p>
-                    <p className="text-[11px] text-muted-foreground">POST alerts to your endpoint</p>
-                  </div>
-                </div>
-                <Switch checked={channels.webhook} onCheckedChange={() => toggleChannel('webhook')} />
-              </div>
-              {channels.webhook && (
-                <div className="pl-11">
-                  <Input
-                    placeholder="https://api.example.com/webhook"
-                    value={webhookUrl}
-                    onChange={(e) => setWebhookUrl(e.target.value)}
-                    className="h-9 text-xs"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Alert Digest Frequency */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Alert Digest Frequency</Label>
-          <Select value={digestFrequency} onValueChange={setDigestFrequency}>
-            <SelectTrigger className="w-full h-9 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Daily Digest</SelectItem>
-              <SelectItem value="weekly">Weekly Digest</SelectItem>
-              <SelectItem value="never">Never (Real-time only)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ─── Integrations ─────────────────────────────────────────────────────
-function IntegrationsSettings() {
-  const [integrationStates, setIntegrationStates] = React.useState<Record<string, boolean>>(
-    Object.fromEntries(INTEGRATIONS.map((i) => [i.id, i.connected]))
-  )
-  const [slackWebhook, setSlackWebhook] = React.useState('')
-  const [showOAuthDialog, setShowOAuthDialog] = React.useState<string | null>(null)
-
-  const toggleIntegration = (id: string) => {
-    if (integrationStates[id]) {
-      setIntegrationStates((prev) => ({ ...prev, [id]: false }))
-    } else {
-      setShowOAuthDialog(id)
-    }
-  }
-
-  return (
-    <>
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Plug className="h-4 w-4 text-emerald-500" />
-            Integrations
-          </CardTitle>
-          <CardDescription>Connect third-party services for enhanced data and workflows</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {INTEGRATIONS.map((integration) => {
-            const isConnected = integrationStates[integration.id]
-            return (
-              <div
-                key={integration.id}
-                className={cn(
-                  'flex items-center justify-between rounded-lg border p-4 transition-colors',
-                  isConnected && 'border-emerald-500/30 bg-emerald-500/5'
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-lg',
-                    isConnected ? 'bg-emerald-500/10' : 'bg-muted'
-                  )}>
-                    <integration.icon className={cn('h-5 w-5', isConnected ? 'text-emerald-500' : 'text-muted-foreground')} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">{integration.name}</p>
-                      <Badge
-                        className={cn(
-                          'text-[9px] px-1.5 py-0 border-0 font-medium',
-                          isConnected ? 'bg-emerald-500/15 text-emerald-600' : 'bg-muted text-muted-foreground'
-                        )}
-                      >
-                        {isConnected ? 'Connected' : 'Not Connected'}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{integration.description}</p>
-                  </div>
-                </div>
-                <Button
-                  size="sm"
-                  variant={isConnected ? 'outline' : 'default'}
-                  className={cn(
-                    'h-8 text-xs',
-                    !isConnected && 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                  )}
-                  onClick={() => toggleIntegration(integration.id)}
-                >
-                  {isConnected ? 'Disconnect' : integration.connectLabel}
-                </Button>
-              </div>
-            )
-          })}
-
-          {/* Slack webhook input if Slack is connected */}
-          {integrationStates['slack'] && (
-            <div className="ml-13 pl-13">
-              <Label className="text-xs text-muted-foreground">Slack Webhook URL</Label>
-              <Input
-                placeholder="https://hooks.slack.com/services/..."
-                value={slackWebhook}
-                onChange={(e) => setSlackWebhook(e.target.value)}
-                className="h-9 text-xs mt-1"
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* OAuth Dialog Mock */}
-      <Dialog open={showOAuthDialog !== null} onOpenChange={(open) => { if (!open) setShowOAuthDialog(null) }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ExternalLink className="h-4 w-4 text-emerald-500" />
-              Connect {showOAuthDialog ? INTEGRATIONS.find((i) => i.id === showOAuthDialog)?.name : ''}
-            </DialogTitle>
-            <DialogDescription>
-              You will be redirected to authorize RankPulse access
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="rounded-lg border bg-muted/30 p-4 text-center space-y-3">
-              <div className="flex items-center justify-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
-                  <Shield className="h-5 w-5 text-emerald-500" />
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  {showOAuthDialog && (() => {
-                    const Icon = INTEGRATIONS.find((i) => i.id === showOAuthDialog)?.icon ?? Plug
-                    return <Icon className="h-5 w-5 text-muted-foreground" />
-                  })()}
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                RankPulse will request read-only access to your account data.
-                You can revoke access at any time from your account settings.
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setShowOAuthDialog(null)}>
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
-              onClick={() => {
-                if (showOAuthDialog) {
-                  setIntegrationStates((prev) => ({ ...prev, [showOAuthDialog]: true }))
-                }
-                setShowOAuthDialog(null)
-              }}
-            >
-              Authorize & Connect
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  )
-}
-
-// ─── API Access ───────────────────────────────────────────────────────
-function ApiAccessSettings() {
-  const [showKey, setShowKey] = React.useState(false)
-  const [copied, setCopied] = React.useState(false)
-
-  const apiKey = 'rp_live_sk_a8f3c2d1e9b7456a0148cf92d3e7b6a1'
-  const maskedKey = 'rp_live_sk_' + '•'.repeat(28)
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(apiKey).catch(() => {})
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Key className="h-4 w-4 text-emerald-500" />
-          API Access
-        </CardTitle>
-        <CardDescription>Manage your API key — Community Edition</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Plan Badge */}
-        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
-          <Award className="h-3.5 w-3.5 text-emerald-500" />
-          <span className="text-xs font-medium text-emerald-600">Community Edition</span>
-          <span className="text-xs text-muted-foreground">— Unlimited API access</span>
-        </div>
-
-        {/* API Key */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">API Key</Label>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 rounded-lg border bg-muted/30 px-3 py-2 font-mono text-xs">
-              {showKey ? apiKey : maskedKey}
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              onClick={() => setShowKey(!showKey)}
-            >
-              {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              onClick={handleCopy}
-            >
-              {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
-            </Button>
-          </div>
-        </div>
-
-        {/* Usage Stats */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">API Usage</span>
-            <span className="font-medium text-emerald-600">
-              Unlimited
-            </span>
-          </div>
-          <p className="text-[11px] text-muted-foreground">
-            No rate limits &middot; Use as much as you need
-          </p>
-        </div>
-
-        {/* Regenerate Key */}
-        <div className="flex items-center justify-between rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            <div>
-              <p className="text-xs font-medium">Regenerate API Key</p>
-              <p className="text-[11px] text-muted-foreground">This will invalidate your current key immediately</p>
-            </div>
-          </div>
-          <Button size="sm" variant="outline" className="h-8 text-xs text-amber-600 border-amber-500/30 hover:bg-amber-500/10">
-            <RefreshCw className="h-3 w-3 mr-1" />
-            Regenerate
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ─── Community & Contributors ─────────────────────────────────────────
-function TeamMembersSettings() {
-  const CONTRIBUTORS = [
-    { initials: 'AK', name: 'Alex K.' },
-    { initials: 'ML', name: 'Maria L.' },
-    { initials: 'JW', name: 'James W.' },
-    { initials: 'SP', name: 'Sofia P.' },
-    { initials: 'RC', name: 'Ryan C.' },
-    { initials: 'YZ', name: 'Yuki Z.' },
-    { initials: 'DH', name: 'David H.' },
-    { initials: 'LB', name: 'Luna B.' },
-    { initials: 'TN', name: 'Tomas N.' },
-    { initials: 'EF', name: 'Elena F.' },
-    { initials: 'MR', name: 'Max R.' },
-    { initials: 'PJ', name: 'Priya J.' },
-  ]
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4 text-emerald-500" />
-              Community & Contributors
-            </CardTitle>
-            <CardDescription>Join the open source community behind RankPulse</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Join our Community */}
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-emerald-500" />
-                <span className="text-sm font-semibold">Join our Community</span>
-              </div>
               <p className="text-xs text-muted-foreground mt-1">
-                1.2K+ community members &middot; 200+ contributors
+                MIT License &middot; No limits, no paywalls, no tracking
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5">
-                <MessageSquare className="h-3 w-3" />
-                Discord
-              </Button>
-              <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5">
-                <GitBranch className="h-3 w-3" />
-                Discussions
-              </Button>
-            </div>
           </div>
-        </div>
-
-        {/* Top Contributors */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold">Top Contributors</h4>
-          <div className="flex flex-wrap gap-2">
-            {CONTRIBUTORS.map((contributor) => (
-              <div key={contributor.name} className="flex items-center gap-2 rounded-lg border p-2 hover:border-emerald-500/20 transition-colors">
-                <Avatar className="h-7 w-7">
-                  <AvatarFallback className="bg-emerald-500/10 text-emerald-600 text-[10px] font-semibold">
-                    {contributor.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-xs font-medium">{contributor.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Become a Contributor CTA */}
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div>
-            <p className="text-sm font-semibold">Become a Contributor</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Help shape the future of open source SEO</p>
-          </div>
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5">
-            <GitBranch className="h-3.5 w-3.5" />
-            Contribute
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ─── Open Source Community ──────────────────────────────────────────
-function BillingSettings() {
-  const communityFeatures = [
-    'Unlimited projects',
-    'All 13 modules',
-    'AI-powered analysis',
-    'Export reports',
-    'No sign-up required',
-  ]
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Award className="h-4 w-4 text-emerald-500" />
-          Open Source Community
-        </CardTitle>
-        <CardDescription>RankPulse is free and open source — forever</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Community Edition */}
-        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Palette className="h-5 w-5 text-emerald-500" />
-              <span className="text-base font-bold">Community Edition</span>
-              <Badge className="bg-emerald-500/15 text-emerald-600 border-0 text-[10px] px-1.5 py-0">Free Forever</Badge>
-            </div>
-            <Badge className="bg-emerald-600 text-white border-0 text-[10px] px-2 py-0.5">MIT License</Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mb-3">No limits, no paywalls, no tracking</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            {communityFeatures.map((feature, i) => (
-              <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                <span>{feature}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Support the Project */}
-        <div className="space-y-3">
-          <h4 className="text-sm font-semibold flex items-center gap-2">
-            <HeartHandshake className="h-4 w-4 text-emerald-500" />
-            Support the Project
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" className="h-9 text-xs justify-start gap-2 hover:border-amber-500/40 hover:bg-amber-500/5">
-              <Star className="h-3.5 w-3.5 text-amber-500" />
-              Star on GitHub
-            </Button>
-            <Button variant="outline" size="sm" className="h-9 text-xs justify-start gap-2 hover:border-red-500/40 hover:bg-red-500/5">
-              <Bug className="h-3.5 w-3.5 text-red-500" />
-              Report a Bug
-            </Button>
-            <Button variant="outline" size="sm" className="h-9 text-xs justify-start gap-2 hover:border-yellow-500/40 hover:bg-yellow-500/5">
-              <Lightbulb className="h-3.5 w-3.5 text-yellow-500" />
-              Request a Feature
-            </Button>
-            <Button variant="outline" size="sm" className="h-9 text-xs justify-start gap-2 hover:border-emerald-500/40 hover:bg-emerald-500/5">
-              <GitBranch className="h-3.5 w-3.5 text-emerald-500" />
-              Contribute
-            </Button>
-          </div>
-          <Button size="sm" className="h-9 text-xs w-full bg-amber-600 hover:bg-amber-700 text-white gap-2">
-            <Coffee className="h-3.5 w-3.5" />
-            Sponsor / Buy Us a Coffee
-          </Button>
         </div>
       </CardContent>
     </Card>
@@ -991,48 +701,30 @@ export function SettingsModule() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure your account, projects, notifications, and integrations
+            Manage projects, data, appearance, and more
           </p>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="account" className="space-y-6">
+        <Tabs defaultValue="projects" className="space-y-6">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="account" className="text-xs">
-              <User className="h-3.5 w-3.5 mr-1.5" />
-              Account
-            </TabsTrigger>
             <TabsTrigger value="projects" className="text-xs">
               <Globe className="h-3.5 w-3.5 mr-1.5" />
               Projects
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="text-xs">
-              <Bell className="h-3.5 w-3.5 mr-1.5" />
-              Notifications
+            <TabsTrigger value="appearance" className="text-xs">
+              <Palette className="h-3.5 w-3.5 mr-1.5" />
+              Appearance
             </TabsTrigger>
-            <TabsTrigger value="integrations" className="text-xs">
-              <Plug className="h-3.5 w-3.5 mr-1.5" />
-              Integrations
+            <TabsTrigger value="account" className="text-xs">
+              <User className="h-3.5 w-3.5 mr-1.5" />
+              Account
             </TabsTrigger>
-            <TabsTrigger value="api" className="text-xs">
-              <Key className="h-3.5 w-3.5 mr-1.5" />
-              API
-            </TabsTrigger>
-            <TabsTrigger value="team" className="text-xs">
-              <Users className="h-3.5 w-3.5 mr-1.5" />
-              Community
-            </TabsTrigger>
-            <TabsTrigger value="billing" className="text-xs">
-              <Award className="h-3.5 w-3.5 mr-1.5" />
-              Open Source
+            <TabsTrigger value="about" className="text-xs">
+              <Info className="h-3.5 w-3.5 mr-1.5" />
+              About
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="account">
-            <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-              <AccountSettings />
-            </motion.div>
-          </TabsContent>
 
           <TabsContent value="projects">
             <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
@@ -1040,33 +732,21 @@ export function SettingsModule() {
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="notifications">
+          <TabsContent value="appearance">
             <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-              <NotificationSettings />
+              <AppearanceSettings />
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="integrations">
+          <TabsContent value="account">
             <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-              <IntegrationsSettings />
+              <AccountSettings />
             </motion.div>
           </TabsContent>
 
-          <TabsContent value="api">
+          <TabsContent value="about">
             <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-              <ApiAccessSettings />
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="team">
-            <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-              <TeamMembersSettings />
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="billing">
-            <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible">
-              <BillingSettings />
+              <AboutSection />
             </motion.div>
           </TabsContent>
         </Tabs>

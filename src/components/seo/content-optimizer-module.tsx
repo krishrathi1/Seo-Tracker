@@ -928,6 +928,35 @@ export function ContentOptimizerModule() {
   const [serpViewMode, setSerpViewMode] = React.useState<'desktop' | 'mobile'>('desktop')
   const [activeSerpTab, setActiveSerpTab] = React.useState<'preview' | 'edit'>('preview')
   const [hasAnalyzed, setHasAnalyzed] = React.useState(false)
+  const [isFetchingUrl, setIsFetchingUrl] = React.useState(false)
+
+  const handleFetchFromUrl = async () => {
+    if (!pageUrl.trim()) return
+    setIsFetchingUrl(true)
+    try {
+      const res = await fetch('/api/seo/fetch-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: pageUrl }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success) {
+          setContent(data.content)
+          if (data.metaDescription) {
+            setSerpDescription(data.metaDescription)
+          }
+          if (data.title) {
+            setSerpTitle(data.title)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch URL:', err)
+    } finally {
+      setIsFetchingUrl(false)
+    }
+  }
 
   // Real-time analysis as user types
   React.useEffect(() => {
@@ -1012,15 +1041,27 @@ export function ContentOptimizerModule() {
 
                 <div className="space-y-2">
                   <Label htmlFor="page-url" className="text-sm font-medium">Page URL (optional)</Label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="page-url"
-                      placeholder="https://example.com/page"
-                      value={pageUrl}
-                      onChange={(e) => setPageUrl(e.target.value)}
-                      className="pl-9"
-                    />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        id="page-url"
+                        placeholder="https://example.com/page"
+                        value={pageUrl}
+                        onChange={(e) => setPageUrl(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleFetchFromUrl}
+                      disabled={!pageUrl.trim() || isFetchingUrl}
+                      className="h-9 gap-1.5 text-xs shrink-0"
+                    >
+                      {isFetchingUrl ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                      {isFetchingUrl ? 'Loading...' : 'Load'}
+                    </Button>
                   </div>
                 </div>
 
