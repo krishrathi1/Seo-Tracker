@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,20 +10,123 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  domain      String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  keywords    Keyword[]
+  audits      SiteAudit[]
+  backlinks   Backlink[]
+  competitors Competitor[]
+  alerts      Alert[]
 }
 
-model Post {
+model Keyword {
+  id           String   @id @default(cuid())
+  projectId    String
+  keyword      String
+  searchEngine String   @default("google")
+  device       String   @default("desktop")
+  location     String   @default("us")
+  currentRank  Int?
+  previousRank Int?
+  bestRank     Int?
+  worstRank    Int?
+  searchVolume Int?
+  difficulty   Int?
+  cpc          Float?
+  url          String?
+  tag          String?
+  group        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rankHistory  KeywordRank[]
+}
+
+model KeywordRank {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  keywordId String
+  rank      Int
+  date      DateTime
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  keyword   Keyword  @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+}
+
+model SiteAudit {
+  id        String   @id @default(cuid())
+  projectId String
+  score     Int
+  totalPages Int
+  status    String   @default("completed")
+  createdAt DateTime @default(now())
+
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues    AuditIssue[]
+}
+
+model AuditIssue {
+  id          String   @id @default(cuid())
+  auditId     String
+  category    String
+  severity    String   @default("medium")
+  title       String
+  description String?
+  url         String?
+  status      String   @default("open")
+  createdAt   DateTime @default(now())
+
+  audit       SiteAudit @relation(fields: [auditId], references: [id], onDelete: Cascade)
+}
+
+model Backlink {
+  id             String   @id @default(cuid())
+  projectId      String
+  sourceDomain   String
+  sourceUrl      String
+  targetUrl      String
+  anchorText     String?
+  linkType       String   @default("text")
+  isFollow       Boolean  @default(true)
+  authorityScore Int?
+  spamScore      Int?
+  status         String   @default("active")
+  firstSeen      DateTime @default(now())
+  lastSeen       DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Competitor {
+  id              String   @id @default(cuid())
+  projectId       String
+  domain          String
+  authorityScore  Int?
+  organicKeywords Int?
+  organicTraffic  Int?
+  backlinks       Int?
+  createdAt       DateTime @default(now())
+
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  projectId String
+  type      String
+  severity  String   @default("info")
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
