@@ -659,10 +659,20 @@ function BacklinkProfileChart({ newCount, lostCount }: { newCount: number; lostC
 
 // ─── Competitor Comparison Table ───────────────────────────────────────
 function CompetitorComparison({ competitors }: { competitors: DashboardData['competitors'] }) {
-  const allRows = [
+  const allRowsRaw = [
     { domain: competitors.ours.domain, authorityScore: competitors.ours.authorityScore, organicKeywords: competitors.ours.organicKeywords, organicTraffic: competitors.ours.organicTraffic, backlinks: competitors.ours.backlinks, isOurs: true },
     ...competitors.competitors.map(c => ({ ...c, isOurs: false })),
   ]
+
+  // De-duplicate by domain (preferring 'ours' first)
+  const seen = new Set<string>()
+  const allRows = allRowsRaw.filter(row => {
+    if (!row.domain) return false
+    const normalizedDomain = row.domain.toLowerCase().trim()
+    if (seen.has(normalizedDomain)) return false
+    seen.add(normalizedDomain)
+    return true
+  })
 
   return (
     <Table>
@@ -676,8 +686,8 @@ function CompetitorComparison({ competitors }: { competitors: DashboardData['com
         </TableRow>
       </TableHeader>
       <TableBody>
-        {allRows.map((row) => (
-          <TableRow key={row.domain} className={row.isOurs ? 'bg-emerald-500/5' : ''}>
+        {allRows.map((row, index) => (
+          <TableRow key={`${row.domain}-${row.isOurs ? 'ours' : index}`} className={row.isOurs ? 'bg-emerald-500/5' : ''}>
             <TableCell className="text-xs font-medium">
               <div className="flex items-center gap-2">
                 {row.isOurs && (
