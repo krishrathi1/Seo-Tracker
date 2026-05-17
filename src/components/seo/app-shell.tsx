@@ -23,6 +23,9 @@ import {
   Code2,
   Zap,
   Rocket,
+  Trash2,
+  Check,
+  ChevronDown,
 } from "lucide-react"
 
 import { useSeoStore, type ModuleKey } from "@/lib/seo-store"
@@ -299,11 +302,6 @@ function NavSection({ items }: { items: NavItem[] }) {
             >
               <item.icon className={cn(isActive && "text-primary")} />
               <span>{item.label}</span>
-              {item.key === "alerts" && (
-                <Badge className="ml-auto bg-primary text-primary-foreground text-[10px] px-1.5 py-0 min-w-[18px] h-[18px]">
-                  3
-                </Badge>
-              )}
             </SidebarMenuButton>
           </SidebarMenuItem>
         )
