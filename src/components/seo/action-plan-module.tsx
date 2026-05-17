@@ -281,7 +281,7 @@ function ActionTimelineItem({
 }) {
   const [expanded, setExpanded] = React.useState(false)
   const priorityConfig = PRIORITY_CONFIG[item.priority]
-  const catIcon = getCategoryIcon(item.category)
+  const CatIcon = getCategoryIcon(item.category)
   const catColor = getCategoryColor(item.category)
   const isCompleted = statusOverride === 'completed'
   const isInProgress = statusOverride === 'in-progress'
@@ -392,7 +392,7 @@ function ActionTimelineItem({
               </span>
               <span>·</span>
               <span className="flex items-center gap-1">
-                <catIcon className="h-3 w-3" style={{ color: catColor }} />
+                <CatIcon className="h-3 w-3" style={{ color: catColor }} />
                 {item.category}
               </span>
             </div>
@@ -644,7 +644,7 @@ function PrioritySummary({
                     p.items.map((item) => {
                       const status = statusOverrides[item.id] ?? item.status
                       const isCompleted = status === 'completed'
-                      const catIcon = getCategoryIcon(item.category)
+                      const CatIcon = getCategoryIcon(item.category)
                       return (
                         <div
                           key={item.id}
@@ -672,7 +672,7 @@ function PrioritySummary({
                             <div className="flex items-center gap-2 mt-1">
                               <PriorityBadge priority={item.priority} />
                               <span className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
-                                <catIcon className="h-2.5 w-2.5" />
+                                <CatIcon className="h-2.5 w-2.5" />
                                 {item.category}
                               </span>
                               <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
