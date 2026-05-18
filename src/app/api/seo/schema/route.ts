@@ -393,13 +393,20 @@ export async function GET(request: NextRequest) {
     let hasMicrodata = false
 
     try {
-      const zai = await ZAI.create()
-      const pageResult = await zai.functions.invoke('page_reader', {
-        url: `https://${project.domain}`,
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 8000)
+      
+      const response = await fetch(`https://${project.domain}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        },
+        signal: controller.signal,
       })
+      
+      clearTimeout(timeoutId)
 
-      if (pageResult?.code === 200 && pageResult?.data?.html) {
-        pageHtml = pageResult.data.html
+      if (response.ok) {
+        pageHtml = await response.text()
 
         // Extract JSON-LD schemas
         const jsonLdSchemas = extractJsonLdSchemas(pageHtml)
