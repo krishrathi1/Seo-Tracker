@@ -497,7 +497,7 @@ function ImpactEffortMatrix({ matrix }: { matrix: ActionPlanData['impactMatrix']
                     {q.items.length}
                   </Badge>
                 </div>
-                <ScrollArea className="max-h-[160px]">
+                <div className="max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
                   <div className="space-y-1.5">
                     {q.items.length === 0 ? (
                       <p className="text-[10px] text-muted-foreground text-center py-3">No items</p>
@@ -526,7 +526,7 @@ function ImpactEffortMatrix({ matrix }: { matrix: ActionPlanData['impactMatrix']
                       </p>
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               </motion.div>
             )
           })}
@@ -633,7 +633,7 @@ function PrioritySummary({
           </TabsList>
           {periods.map((p) => (
             <TabsContent key={p.key} value={p.key} className="mt-0">
-              <ScrollArea className="max-h-[320px]">
+              <div className="max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
                 <div className="space-y-2">
                   {p.items.length === 0 ? (
                     <div className="flex flex-col items-center py-8 text-muted-foreground">
@@ -687,7 +687,7 @@ function PrioritySummary({
                     })
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </TabsContent>
           ))}
         </Tabs>
@@ -884,7 +884,7 @@ export function ActionPlanModule() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="max-h-[600px]">
+              <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                 <div className="space-y-0">
                   {allActions.length === 0 ? (
                     <div className="flex flex-col items-center py-12 text-muted-foreground">
@@ -908,7 +908,7 @@ export function ActionPlanModule() {
                       ))
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
