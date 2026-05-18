@@ -300,14 +300,14 @@ function SidebarLogo() {
 
       {/* 2. Collapsed State: Logo icon centered by default, crossfades to toggle trigger on hover */}
       {isCollapsed && (
-        <div className="relative flex items-center justify-center w-8 h-8 mx-auto">
+        <div className="relative flex items-center justify-center w-10 h-10 mx-auto">
           <div
             className={cn(
               "absolute inset-0 flex items-center justify-center rounded-lg bg-primary text-primary-foreground transition-all duration-200 ease-in-out",
               isHovered ? "opacity-0 scale-75 pointer-events-none" : "opacity-100 scale-100"
             )}
           >
-            <Activity className="h-4.5 w-4.5" />
+            <Activity className="h-5 w-5" />
           </div>
           <div
             className={cn(
@@ -315,7 +315,7 @@ function SidebarLogo() {
               isHovered ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
             )}
           >
-            <SidebarTrigger className="h-8 w-8 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent" />
+            <SidebarTrigger className="h-10 w-10 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent" />
           </div>
         </div>
       )}
@@ -646,8 +646,8 @@ export function AppShell() {
         <SidebarFooter>
           <SidebarSeparator />
           <div className="flex items-center gap-2 px-2 group-data-[collapsible=icon]:justify-center">
-            <Avatar className="h-7 w-7">
-              <AvatarFallback className="bg-primary/15 text-primary text-[10px] font-semibold">
+            <Avatar className="h-7 w-7 transition-all duration-200 group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9">
+              <AvatarFallback className="bg-primary/15 text-primary text-[10px] group-data-[collapsible=icon]:text-xs font-semibold">
                 RP
               </AvatarFallback>
             </Avatar>
