@@ -24,7 +24,7 @@ importers:
         specifier: ^3.39.1
         version: 3.55.0(@codemirror/language@6.12.3)(@lezer/highlight@1.2.3)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(yjs@13.6.30)
       '@prisma/client':
-        specifier: ^6.11.1
+        specifier: '6'
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
       '@radix-ui/react-accordion':
         specifier: ^1.2.11
@@ -153,7 +153,7 @@ importers:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       prisma:
-        specifier: ^6.11.1
+        specifier: '6'
         version: 6.19.3(typescript@5.9.3)
       react:
         specifier: ^19.0.0
