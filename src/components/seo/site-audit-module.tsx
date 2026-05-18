@@ -366,7 +366,7 @@ function CategoryBadge({ category }: { category: string }) {
 }
 
 // ─── Status Cycle Button ──────────────────────────────────────────────────
-function StatusCycleButton({ status, onToggle }: { status: string; onToggle: () => void }) {
+function StatusCycleButton({ status, onToggle }: { status: string; onToggle: (e: React.MouseEvent) => void }) {
   const normalized = normalizeStatus(status)
   const config = STATUS_CONFIG[normalized as keyof typeof STATUS_CONFIG]
   const Icon = config?.icon ?? XCircle

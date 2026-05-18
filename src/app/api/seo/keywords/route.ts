@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { Prisma } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET /api/seo/keywords - List keywords with filtering and pagination
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause
-    const where: Parameters<typeof db.keyword.findMany>[0] extends { where?: infer W } ? W : never = { projectId, isActive: true }
+    const where: Prisma.KeywordWhereInput = { projectId, isActive: true }
 
     if (search) {
       where.keyword = { contains: search }

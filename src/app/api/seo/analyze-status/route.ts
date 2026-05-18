@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
       stepLabel: stepLabels[progress.step] || progress.step,
       progress: progress.progress,
       status: progress.status,
-      ...(progress.error && { error: progress.error }),
-      ...(progress.result && progress.step === 'complete' && { result: progress.result }),
+      ...(progress.error ? { error: progress.error } : {}),
+      ...(progress.result && progress.step === 'complete' ? { result: progress.result } : {}),
     })
   } catch (error) {
     console.error('Analyze-status error:', error)

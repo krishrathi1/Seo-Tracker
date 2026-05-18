@@ -348,7 +348,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ── Page Performance ──
-    const pagePerformance = []
+    const pagePerformance: Array<{ url: string; score: number; lcp: number; cls: number; fid: number }> = []
 
     // Homepage
     pagePerformance.push({

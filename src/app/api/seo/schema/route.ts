@@ -22,6 +22,7 @@ interface SchemaTypeInfo {
   properties: string[]
   errors: string[]
   warnings: string[]
+  reason?: string
 }
 
 interface RichResultEligibility {
@@ -457,7 +458,7 @@ export async function GET(request: NextRequest) {
     // ── If no schemas detected, provide helpful analysis ──
     if (detectedSchemas.length === 0) {
       // Use LLM to analyze what schemas would be beneficial
-      let llmSuggestions: SchemaTypeInfo[] = []
+      let llmSuggestions: Array<{ type: string; reason?: string }> = []
       try {
         const zai = await ZAI.create()
         const llmResponse = await zai.chat.completions.create({

@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
 
       // Create 90 days of rank history
       const now = new Date()
-      const rankHistoryData = []
+      const rankHistoryData: Array<{ keywordId: string; rank: number; date: Date }> = []
       for (let day = 89; day >= 0; day--) {
         const date = new Date(now)
         date.setDate(date.getDate() - day)
@@ -321,7 +321,7 @@ export async function POST(request: NextRequest) {
           date,
         })
       }
-      await db.keywordRank.createMany({ data: rankHistoryData })
+      await db.keywordRank.createMany({ data: rankHistoryData as any })
     }
 
     // 3. Create site audits

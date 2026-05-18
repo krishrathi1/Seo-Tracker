@@ -130,7 +130,14 @@ function generateFallbackGaps(
   volume: number
   difficulty: number
 }> {
-  const gaps = []
+  const gaps: Array<{
+    keyword: string
+    yourRank: number | null
+    competitorRank: number
+    competitor: string
+    volume: number
+    difficulty: number
+  }> = []
   const projName = projectDomain.replace(/\.[a-z]+$/, '')
 
   if (competitors.length === 0) {

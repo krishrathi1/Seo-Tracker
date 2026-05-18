@@ -411,7 +411,7 @@ export function AiChatAssistant() {
                     key={message.id}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    transition={{ duration: 0.2, ease: 'easeOut' as const }}
                     className={cn(
                       'flex gap-2.5',
                       message.role === 'user' ? 'justify-end' : 'justify-start'

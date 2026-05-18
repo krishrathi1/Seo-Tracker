@@ -129,7 +129,7 @@ const fadeUp = {
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.08, duration: 0.45, ease: 'easeOut' },
+    transition: { delay: i * 0.08, duration: 0.45, ease: 'easeOut' as const },
   }),
 }
 
@@ -953,7 +953,7 @@ function PriorityIssues({ data }: { data: DashboardData }) {
 
   // Derive top 3 critical/high issues from audit data
   // Since we don't have the actual issue list in DashboardData, we synthesize from the breakdown
-  const priorityIssues = []
+  const priorityIssues: Array<{ severity: string; title: string; description: string }> = []
 
   if (data.audit.issueBreakdown.critical > 0) {
     priorityIssues.push(

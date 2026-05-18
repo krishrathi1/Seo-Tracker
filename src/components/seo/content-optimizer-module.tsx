@@ -229,6 +229,8 @@ function generateLSIKeywords(keyword: string): string[] {
   return [...new Set(results)].slice(0, 20)
 }
 
+const PIXELS_PER_CHAR = 8
+
 function estimatePixelWidth(text: string): number {
   // Rough estimate: average character width in Google's title font
   let width = 0

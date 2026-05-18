@@ -437,7 +437,7 @@ Provide a comprehensive SEO analysis.`,
     })
 
     // Save keywords from LLM analysis
-    const keywordsCreated = []
+    const keywordsCreated: string[] = []
     if (seoAnalysis?.keywords?.length) {
       for (const kw of seoAnalysis.keywords) {
         const estimatedRank = Math.max(1, Math.min(100,
@@ -468,7 +468,7 @@ Provide a comprehensive SEO analysis.`,
 
         // Generate 30 days of rank history for each keyword
         const now = new Date()
-        const rankHistoryData = []
+        const rankHistoryData: Array<{ keywordId: string; rank: number; date: Date }> = []
         let baseRank = estimatedRank + Math.round((Math.random() - 0.3) * 15)
 
         for (let day = 29; day >= 0; day--) {
@@ -489,7 +489,7 @@ Provide a comprehensive SEO analysis.`,
           })
         }
 
-        await db.keywordRank.createMany({ data: rankHistoryData })
+        await db.keywordRank.createMany({ data: rankHistoryData as any })
         keywordsCreated.push(keyword.id)
       }
     }
@@ -706,7 +706,7 @@ function generateFallbackAnalysis(
   if (desc.length > 0) score += 5
   score = Math.min(100, score)
 
-  const issues = []
+  const issues: Array<{ category: string; severity: string; title: string; description: string; fix: string }> = []
   if (!hasSSL) issues.push({ category: 'security', severity: 'critical', title: 'No SSL certificate', description: 'The site is not using HTTPS, which is a ranking factor and security requirement.', fix: 'Install an SSL certificate and redirect all HTTP traffic to HTTPS.' })
   if (!parsedHtml?.hasViewport) issues.push({ category: 'mobile', severity: 'critical', title: 'Missing viewport meta tag', description: 'The site lacks a viewport meta tag, causing poor mobile rendering.', fix: 'Add <meta name="viewport" content="width=device-width, initial-scale=1"> to the head section.' })
   if (!parsedHtml?.metaDescription) issues.push({ category: 'on-page', severity: 'high', title: 'Missing meta description', description: 'No meta description found, reducing click-through rates from search results.', fix: 'Add a compelling meta description of 150-160 characters for each page.' })

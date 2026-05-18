@@ -243,7 +243,7 @@ function ModuleContent({ moduleKey }: { moduleKey: ModuleKey }) {
     return <SettingsModule />
   }
 
-  const mod = modulePlaceholders[moduleKey]
+  const mod = modulePlaceholders[moduleKey as ModuleKey]
   const Icon = navItems.find((i) => i.key === moduleKey)?.icon ?? LayoutDashboard
 
   return (

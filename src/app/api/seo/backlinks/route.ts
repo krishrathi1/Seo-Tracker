@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { Prisma } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET /api/seo/backlinks - List backlinks with filtering and stats
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause dynamically
-    const where: Parameters<typeof db.backlink.findMany>[0] extends { where?: infer W } ? W : never = { projectId: resolvedProjectId }
+    const where: Prisma.BacklinkWhereInput = { projectId: resolvedProjectId }
 
     if (status) {
       where.status = status

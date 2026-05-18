@@ -128,7 +128,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType; 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, ease: 'easeOut' },
+  transition: { duration: 0.4, ease: 'easeOut' as const },
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────

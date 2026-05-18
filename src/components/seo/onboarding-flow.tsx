@@ -334,7 +334,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
+              transition={{ duration: 0.4, ease: 'easeOut' as const }}
             >
               {/* Logo */}
               <motion.div
@@ -558,7 +558,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
+              transition={{ duration: 0.4, ease: 'easeOut' as const }}
             >
               {/* Logo */}
               <div className="flex items-center gap-3 mb-2">
@@ -580,7 +580,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                   <motion.div
                     className="h-full rounded-full bg-emerald-500"
                     animate={{ width: `${displayProgress}%` }}
-                    transition={{ duration: 0.8, ease: 'easeInOut' }}
+                    transition={{ duration: 0.8, ease: 'easeInOut' as const }}
                   />
                 </div>
                 <div className="flex justify-between mt-2">
@@ -626,7 +626,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
+              transition={{ duration: 0.5, ease: 'easeOut' as const }}
             >
               {/* Success Animation */}
               <motion.div
