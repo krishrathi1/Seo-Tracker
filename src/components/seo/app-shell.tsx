@@ -61,6 +61,7 @@ import {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import {
   DropdownMenu,
@@ -264,22 +265,60 @@ function ModuleContent({ moduleKey }: { moduleKey: ModuleKey }) {
 
 // ─── Sidebar Logo ─────────────────────────────────────────────────────
 function SidebarLogo() {
+  const { state } = useSidebar()
+  const [isHovered, setIsHovered] = React.useState(false)
+
+  const isCollapsed = state === "collapsed"
+
   return (
-    <div className="flex items-center justify-between px-2 py-1">
-      <div className="flex items-center gap-2 group-data-[collapsible=icon]:hidden">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
-          <Activity className="h-4.5 w-4.5" />
+    <div
+      className="relative flex items-center justify-between px-2 py-1 h-9 select-none"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* 1. Expanded State: Full logo text on left, toggle trigger fades in on right upon hover */}
+      {!isCollapsed && (
+        <>
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
+              <Activity className="h-4.5 w-4.5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold tracking-tight text-sidebar-foreground">
+                RankPulse
+              </span>
+              <span className="text-[10px] text-sidebar-foreground/50 font-medium uppercase tracking-widest">
+                SEO Tracker
+              </span>
+            </div>
+          </div>
+          <div className={cn("transition-all duration-200", isHovered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-1 pointer-events-none")}>
+            <SidebarTrigger className="h-7 w-7 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent" />
+          </div>
+        </>
+      )}
+
+      {/* 2. Collapsed State: Logo icon centered by default, crossfades to toggle trigger on hover */}
+      {isCollapsed && (
+        <div className="relative flex items-center justify-center w-8 h-8 mx-auto">
+          <div
+            className={cn(
+              "absolute inset-0 flex items-center justify-center rounded-lg bg-primary text-primary-foreground transition-all duration-200 ease-in-out",
+              isHovered ? "opacity-0 scale-75 pointer-events-none" : "opacity-100 scale-100"
+            )}
+          >
+            <Activity className="h-4.5 w-4.5" />
+          </div>
+          <div
+            className={cn(
+              "absolute inset-0 flex items-center justify-center transition-all duration-200 ease-in-out",
+              isHovered ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+            )}
+          >
+            <SidebarTrigger className="h-8 w-8 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent" />
+          </div>
         </div>
-        <div className="flex flex-col">
-          <span className="text-sm font-bold tracking-tight text-sidebar-foreground">
-            RankPulse
-          </span>
-          <span className="text-[10px] text-sidebar-foreground/50 font-medium uppercase tracking-widest">
-            SEO Tracker
-          </span>
-        </div>
-      </div>
-      <SidebarTrigger className="h-7 w-7 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent" />
+      )}
     </div>
   )
 }
