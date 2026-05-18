@@ -728,6 +728,8 @@ function CompetitorComparison({ competitors }: { competitors: DashboardData['com
     return true
   })
 
+  const [imageError, setImageError] = React.useState<Record<string, boolean>>({})
+
   return (
     <Table>
       <TableHeader>
@@ -744,14 +746,20 @@ function CompetitorComparison({ competitors }: { competitors: DashboardData['com
           <TableRow key={`${row.domain}-${row.isOurs ? 'ours' : index}`} className={row.isOurs ? 'bg-emerald-500/5 hover:bg-emerald-500/10' : 'hover:bg-zinc-50 dark:hover:bg-zinc-900/50'}>
             <TableCell className="text-xs font-medium py-3">
               <div className="flex items-center gap-2">
-                <img
-                  src={`https://www.google.com/s2/favicons?sz=64&domain=${row.domain}`}
-                  alt=""
-                  className="h-4 w-4 rounded-sm object-contain bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shrink-0"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = `https://favicons.githubusercontent.com/g/${row.domain}`
-                  }}
-                />
+                {imageError[row.domain] ? (
+                  <div className="h-4 w-4 rounded-sm bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 border border-zinc-200 dark:border-zinc-700">
+                    <Globe className="h-2.5 w-2.5 text-zinc-400" />
+                  </div>
+                ) : (
+                  <img
+                    src={`https://www.google.com/s2/favicons?sz=64&domain=${row.domain}`}
+                    alt=""
+                    className="h-4 w-4 rounded-sm object-contain bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shrink-0"
+                    onError={() => {
+                      setImageError((prev) => ({ ...prev, [row.domain]: true }))
+                    }}
+                  />
+                )}
                 {row.isOurs && (
                   <Badge className="bg-emerald-500/15 text-emerald-600 text-[9px] px-1.5 py-0.5 border-0 font-bold tracking-wider shrink-0 flex items-center">
                     <Crown className="h-2.5 w-2.5 mr-0.5 text-emerald-500" />YOU
