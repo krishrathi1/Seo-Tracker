@@ -112,7 +112,12 @@ Generate keyword gaps - keywords that competitors rank for but the project does 
       }))
     }
   } catch (err) {
-    console.error('LLM keyword gap error:', err)
+    const isConfigError = err instanceof Error && (err.message.includes('Configuration file not found') || err.message.includes('apiKey'));
+    if (isConfigError) {
+      console.warn('Keyword gaps: ZAI SDK is not configured. Falling back to local keyword gap generator.')
+    } else {
+      console.error('LLM keyword gap error:', err)
+    }
   }
 
   // Fallback: generate basic gaps from competitor domains

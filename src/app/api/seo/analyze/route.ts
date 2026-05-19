@@ -214,7 +214,12 @@ export async function POST(request: NextRequest) {
 
       setProgress(url, 'searching_backlinks', 45, 'Search data collected')
     } catch (err) {
-      console.error('web_search error:', err)
+      const isConfigError = err instanceof Error && (err.message.includes('Configuration file not found') || err.message.includes('apiKey'));
+      if (isConfigError) {
+        console.warn('web_search: ZAI SDK is not configured. Falling back to local data generation.')
+      } else {
+        console.error('web_search error:', err)
+      }
       setProgress(url, 'searching_backlinks', 40, 'Search partially completed')
     }
 
@@ -427,7 +432,12 @@ Provide a comprehensive SEO analysis.`,
 
       setProgress(url, 'analyzing_seo', 70, 'SEO analysis completed')
     } catch (err) {
-      console.error('LLM analysis error:', err)
+      const isConfigError = err instanceof Error && (err.message.includes('Configuration file not found') || err.message.includes('apiKey'));
+      if (isConfigError) {
+        console.warn('LLM analysis: ZAI SDK is not configured. Falling back to dynamic local SEO report generation.')
+      } else {
+        console.error('LLM analysis error:', err)
+      }
       // Generate fallback analysis if LLM fails
       seoAnalysis = generateFallbackAnalysis(
         domain,

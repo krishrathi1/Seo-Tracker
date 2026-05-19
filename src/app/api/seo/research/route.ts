@@ -117,7 +117,12 @@ Use the search context to identify real terms, questions, and topics that people
       enhancedWithSearch: searchContext.length > 0,
     })
   } catch (error) {
-    console.error('Research GET error:', error)
+    const isConfigError = error instanceof Error && (error.message.includes('Configuration file not found') || error.message.includes('apiKey'));
+    if (isConfigError) {
+      console.warn('Research: ZAI SDK is not configured. Falling back to local keyword generator.')
+    } else {
+      console.error('Research GET error:', error)
+    }
     // Return fallback data on error
     const seed = new URL(request.url).searchParams.get('seed') || 'seo tools'
     return NextResponse.json({
